@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/cream" android:fitsSystemWindows="true">
+
+    <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingBottom="24dp">
+
+            <ImageButton android:id="@+id/btn_back" android:layout_width="44dp" android:layout_height="44dp" android:layout_margin="16dp" android:background="@drawable/bg_round_btn" android:contentDescription="Back" android:src="@drawable/ic_back" app:tint="@color/cream"/>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingStart="24dp" android:paddingEnd="24dp">
+                <TextView android:id="@+id/txt_category" android:layout_width="wrap_content" android:layout_height="wrap_content" android:rotation="-4" android:background="@drawable/bg_stamp" android:paddingStart="12dp" android:paddingEnd="12dp" android:paddingTop="4dp" android:paddingBottom="4dp" android:text="FOOD" android:textColor="@color/coral" android:textSize="13sp" android:textStyle="bold" android:letterSpacing="0.15"/>
+                <TextView android:id="@+id/txt_name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="Cafe Ocampo" android:textColor="@color/ink" android:textSize="34sp" android:textStyle="bold" android:fontFamily="serif"/>
+                <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:gravity="center_vertical">
+                    <ImageView android:layout_width="18dp" android:layout_height="18dp" android:src="@drawable/ic_pin" app:tint="@color/coral" android:importantForAccessibility="no"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:text="Malate, Manila  ·  0.4 km away" android:textColor="@color/muted_dark" android:textSize="14sp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_photos" android:layout_width="match_parent" android:layout_height="290dp" android:layout_marginTop="14dp" android:clipToPadding="false" android:paddingStart="16dp" android:paddingEnd="16dp"/>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="24dp" android:layout_marginEnd="24dp" android:layout_marginTop="8dp" android:background="@drawable/bg_stats">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center" android:paddingTop="14dp" android:paddingBottom="14dp"><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="12" android:textColor="@color/ink" android:textSize="24sp" android:textStyle="bold" android:fontFamily="serif"/><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Likes" android:textColor="@color/muted_dark" android:textSize="12sp"/></LinearLayout>
+                <View android:layout_width="1dp" android:layout_height="match_parent" android:layout_marginTop="12dp" android:layout_marginBottom="12dp" android:background="@color/line"/>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center" android:paddingTop="14dp" android:paddingBottom="14dp"><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="5" android:textColor="@color/ink" android:textSize="24sp" android:textStyle="bold" android:fontFamily="serif"/><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Saves" android:textColor="@color/muted_dark" android:textSize="12sp"/></LinearLayout>
+                <View android:layout_width="1dp" android:layout_height="match_parent" android:layout_marginTop="12dp" android:layout_marginBottom="12dp" android:background="@color/line"/>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center" android:paddingTop="14dp" android:paddingBottom="14dp"><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="3" android:textColor="@color/ink" android:textSize="24sp" android:textStyle="bold" android:fontFamily="serif"/><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Photos" android:textColor="@color/muted_dark" android:textSize="12sp"/></LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_margin="24dp" android:orientation="vertical" android:padding="18dp" android:rotation="1" android:background="@drawable/bg_note">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="PINNED NOTE" android:textColor="@color/muted_dark" android:textSize="11sp" android:textStyle="bold" android:letterSpacing="0.2"/>
+                <TextView android:id="@+id/txt_review" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:lineSpacingExtra="4dp" android:text="Quiet spot near campus. Great iced coffee and plenty of outlets, so it is perfect for study sessions." android:textColor="@color/ink" android:textSize="17sp" android:textStyle="italic" android:fontFamily="serif"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:layout_gravity="end" android:text="— @jerimaya" android:textColor="@color/muted_dark" android:textSize="14sp"/>
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingStart="24dp" android:paddingEnd="24dp" android:gravity="center_vertical">
+                <ImageView android:layout_width="48dp" android:layout_height="48dp" android:padding="11dp" android:background="@drawable/bg_avatar" android:src="@drawable/ic_person" app:tint="@color/cream" android:contentDescription="Author"/>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="14dp" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Pinned by @jerimaya" android:textColor="@color/ink" android:textSize="15sp" android:textStyle="bold"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Public post" android:textColor="@color/muted_dark" android:textSize="13sp"/>
+                </LinearLayout>
+                <com.google.android.material.button.MaterialButton android:id="@+id/btn_follow" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="wrap_content" android:layout_height="48dp" android:text="Follow" android:textColor="@color/ink" app:strokeColor="@color/ink" app:cornerRadius="14dp"/>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:padding="14dp" android:background="@drawable/bg_card_ink">
+        <ImageButton android:id="@+id/btn_like" android:layout_width="56dp" android:layout_height="56dp" android:background="@drawable/bg_round_btn" android:contentDescription="Like" android:src="@drawable/ic_heart" app:tint="@color/icon_toggle"/>
+        <ImageButton android:id="@+id/btn_save" android:layout_width="56dp" android:layout_height="56dp" android:layout_marginStart="10dp" android:background="@drawable/bg_round_btn" android:contentDescription="Save" android:src="@drawable/ic_bookmark" app:tint="@color/icon_toggle"/>
+        <com.google.android.material.button.MaterialButton android:id="@+id/btn_go" android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:layout_marginStart="10dp" android:text="Take me there" android:textSize="16sp" android:textStyle="bold" android:textColor="@color/ink" app:backgroundTint="@color/mustard" app:cornerRadius="28dp" app:icon="@drawable/ic_pin" app:iconTint="@color/ink"/>
+    </LinearLayout>
+</LinearLayout>

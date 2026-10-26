@@ -1,4 +1,4 @@
-package com.example.yourpackage;
+package com.example.studyflow;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;

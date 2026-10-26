@@ -1,5 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.StudyFlow" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.SpotSnap" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/ink</item>
+        <item name="colorOnPrimary">@color/cream</item>
+        <item name="colorSecondary">@color/mustard</item>
+        <item name="android:windowBackground">@color/cream</item>
+        <item name="android:statusBarColor">@color/cream</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+    <!-- "Stamp" style category chip -->
+    <style name="Widget.SpotSnap.Chip" parent="Widget.MaterialComponents.Chip.Choice">
+        <item name="chipBackgroundColor">@color/chip_bg</item>
+        <item name="android:textColor">@color/ink</item>
+        <item name="chipStrokeColor">@color/ink</item>
+        <item name="chipStrokeWidth">1.5dp</item>
+        <item name="checkedIconVisible">false</item>
+        <item name="chipCornerRadius">8dp</item>
+    </style>
 </resources>

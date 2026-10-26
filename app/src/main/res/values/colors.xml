@@ -7,4 +7,18 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- SpotSnap screens -->
+    <color name="ink">#1F2A2E</color>
+    <color name="ink_soft">#2F3E43</color>
+    <color name="cream">#FBF3E4</color>
+    <color name="paper">#FFFFFF</color>
+    <color name="mustard">#F2B134</color>
+    <color name="note">#FFE9A8</color>
+    <color name="coral">#D9482B</color>
+    <color name="coral_light">#FF8A73</color>
+    <color name="muted">#9AA8A3</color>
+    <color name="muted_dark">#6B6B5E</color>
+    <color name="line">#E6D9BF</color>
+    <color name="photo_placeholder">#EADBC0</color>
 </resources>

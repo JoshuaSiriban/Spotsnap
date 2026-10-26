@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "StudyFlow"
+rootProject.name = "SpotSnap"
 include(":app")
