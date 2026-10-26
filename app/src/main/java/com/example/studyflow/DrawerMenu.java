@@ -28,6 +28,8 @@ public class DrawerMenu {
         bind(activity, drawer, R.id.drawer_saved, new SavedLocationsFragment());
         bind(activity, drawer, R.id.drawer_album, new AlbumFragment());
         bind(activity, drawer, R.id.drawer_search, new SearchFragment());
+        bind(activity, drawer, R.id.drawer_profile, new ProfileFragment());
+        bind(activity, drawer, R.id.drawer_settings, new SettingsFragment());
 
         drawer.findViewById(R.id.drawer_logout).setOnClickListener(v -> {
             drawer.closeDrawer(GravityCompat.START);

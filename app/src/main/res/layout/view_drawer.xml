@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/ink" android:clickable="true" android:focusable="true" android:paddingTop="40dp">
 
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
+    <LinearLayout android:id="@+id/drawer_profile" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackground">
         <ImageView android:layout_width="84dp" android:layout_height="84dp" android:padding="20dp" android:background="@drawable/bg_avatar" android:src="@drawable/ic_person" app:tint="@color/cream" android:contentDescription="Profile picture"/>
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="Jerimaya Dennielle V. Flores" android:textColor="@color/cream" android:textSize="20sp" android:textStyle="bold" android:fontFamily="serif"/>
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="@jerimaya  ·  14 spots shared" android:textColor="@color/muted" android:textSize="13sp"/>
@@ -20,6 +20,10 @@
     <LinearLayout android:id="@+id/drawer_search" android:layout_width="match_parent" android:layout_height="60dp" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="24dp" android:paddingEnd="24dp" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackground">
         <ImageView android:layout_width="38dp" android:layout_height="38dp" android:padding="9dp" android:background="@drawable/bg_badge" android:src="@drawable/ic_search" app:tint="@color/ink" android:importantForAccessibility="no"/>
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="16dp" android:text="Search" android:textColor="@color/cream" android:textSize="17sp" android:fontFamily="serif"/>
+    </LinearLayout>
+    <LinearLayout android:id="@+id/drawer_settings" android:layout_width="match_parent" android:layout_height="60dp" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="24dp" android:paddingEnd="24dp" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackground">
+        <ImageView android:layout_width="38dp" android:layout_height="38dp" android:padding="9dp" android:background="@drawable/bg_badge" android:src="@drawable/ic_settings" app:tint="@color/ink" android:importantForAccessibility="no"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="16dp" android:text="Settings" android:textColor="@color/cream" android:textSize="17sp" android:fontFamily="serif"/>
     </LinearLayout>
     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="24dp" android:layout_marginTop="24dp" android:layout_marginBottom="4dp" android:text="MAP FILTERS" android:textColor="@color/muted" android:textSize="12sp" android:textStyle="bold" android:letterSpacing="0.15"/>
     <com.google.android.material.checkbox.MaterialCheckBox android:layout_width="match_parent" android:layout_height="48dp" android:paddingStart="16dp" android:paddingEnd="24dp" android:layout_marginStart="8dp" android:checked="true" android:text="Food" android:textColor="@color/cream" android:textSize="15sp" app:buttonTint="@color/mustard"/>
