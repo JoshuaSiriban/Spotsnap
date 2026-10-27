@@ -38,6 +38,10 @@ public class DrawerMenu {
         drawer.findViewById(R.id.drawer_logout).setOnClickListener(v -> {
             drawer.closeDrawer(GravityCompat.START);
             Toast.makeText(activity, "Logged out (UI only)", Toast.LENGTH_SHORT).show();
+
+            Intent intent = new Intent(activity, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); // ensure user cant go back
+            activity.startActivity(intent);
         });
 
         OnBackPressedCallback callback = new OnBackPressedCallback(false) {
