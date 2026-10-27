@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
 
-/** UI only: shows dummy data unless values are passed in from Add Spot. */
 public class PlaceDetailsFragment extends Fragment {
 
     private Spot spot;
@@ -23,7 +22,6 @@ public class PlaceDetailsFragment extends Fragment {
 
 
     public PlaceDetailsFragment() {
-        // Required empty public constructor
     }
 
     public void setSpot(Spot spot)
@@ -80,9 +78,8 @@ public class PlaceDetailsFragment extends Fragment {
 
         RecyclerView rv = view.findViewById(R.id.rv_photos);
         rv.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
-        rv.setAdapter(new PolaroidAdapter(spot.images));
+        rv.setAdapter(new PolaroidAdapter(spot != null ? spot.images : new java.util.ArrayList<Photo>()));
 
-        // Like and Save toggle between two looks (see res/color/icon_toggle.xml)
         view.findViewById(R.id.btn_like).setOnClickListener(v -> v.setSelected(!v.isSelected()));
         view.findViewById(R.id.btn_save).setOnClickListener(v -> {
             v.setSelected(!v.isSelected());

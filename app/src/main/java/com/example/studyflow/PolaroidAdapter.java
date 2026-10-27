@@ -10,7 +10,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 
-/** Dummy photo cards: colored blocks stand in for real pictures. */
 public class PolaroidAdapter extends RecyclerView.Adapter<PolaroidAdapter.VH> {
 
     private ArrayList<Photo> photos;

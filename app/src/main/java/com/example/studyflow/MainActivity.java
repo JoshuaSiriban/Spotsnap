@@ -1,13 +1,15 @@
 package com.example.studyflow;
 
-import android.app.Dialog;
 import android.os.Bundle;
 import android.view.View;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.compose.runtime.Latch;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -26,25 +28,48 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        getSupportFragmentManager().addOnBackStackChangedListener(() -> {
-            View container = findViewById(R.id.fragment_container);
+        getSupportFragmentManager().addOnBackStackChangedListener(() ->
+                findViewById(R.id.fragment_container).post(this::updateMapUi));
 
-            if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
-                container.setVisibility(View.GONE);
-            }
-        });
+        getSupportFragmentManager().registerFragmentLifecycleCallbacks(
+                new FragmentManager.FragmentLifecycleCallbacks() {
+                    @Override
+                    public void onFragmentViewCreated(@NonNull FragmentManager fm, @NonNull Fragment f,
+                                                      @NonNull View v, @Nullable Bundle savedInstanceState) {
+                        if (f.getId() == R.id.fragment_container) {
+                            v.setClickable(true);
+                            v.setFocusable(true);
+                        }
+                    }
+
+                    @Override
+                    public void onFragmentViewDestroyed(@NonNull FragmentManager fm, @NonNull Fragment f) {
+                        findViewById(R.id.fragment_container).post(MainActivity.this::updateMapUi);
+                    }
+                }, false);
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         DrawerMenu.setup(this, drawer);
 
-        findViewById(R.id.btn_menu).setOnClickListener(v -> drawer.openDrawer(GravityCompat.START));
+        findViewById(R.id.btn_profile).setOnClickListener(v -> drawer.openDrawer(GravityCompat.START));
+        findViewById(R.id.search_bar).setOnClickListener(v -> DrawerMenu.open(this, new SearchFragment()));
         findViewById(R.id.btn_add).setOnClickListener(v -> DrawerMenu.open(this, new AddSpotFragment()));
-        findViewById(R.id.btn_place).setOnClickListener(v ->
-                DrawerMenu.open(this, PlaceDetailsFragment.newInstance(null, null, null)));
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
 
         mapFragment.getMapAsync(this);
+    }
+
+    private void updateMapUi() {
+        boolean onMap = getSupportFragmentManager().getBackStackEntryCount() == 0;
+        findViewById(R.id.fragment_container).setVisibility(onMap ? View.GONE : View.VISIBLE);
+        findViewById(R.id.map_overlay).setVisibility(onMap ? View.VISIBLE : View.GONE);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateMapUi();
     }
 
     @Override
@@ -53,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         LatLng manila = new LatLng(14.5995, 120.9842);
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(manila, 12));
 
-        ArrayList<Photo> photos = new ArrayList<>(); // same photos for every place for now
+        ArrayList<Photo> photos = new ArrayList<>();
         photos.add(new Photo(R.drawable.dlsu, "La Salle Building in its full glory"));
         photos.add(new Photo(R.drawable.dlsu, "Cool place"));
 
@@ -82,7 +107,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 fragment.setSpot(spot);
 
                 DrawerMenu.open(this, fragment);
-                findViewById(R.id.fragment_container).setVisibility(View.VISIBLE);
             }
 
             return true;
