@@ -3,15 +3,60 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/drawer_layout" android:layout_width="match_parent" android:layout_height="match_parent">
 
-    <FrameLayout android:id="@+id/fragment_container" android:layout_width="match_parent" android:layout_height="match_parent" android:fitsSystemWindows="true" android:background="#DDE6DF">
-        <!-- Demo map placeholder. Your real Map screen replaces this. -->
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:text="Map screen goes here" android:textColor="@color/muted_dark" android:textSize="16sp"/>
-        <ImageButton android:id="@+id/btn_menu" android:layout_width="52dp" android:layout_height="52dp" android:layout_margin="16dp" android:background="@drawable/bg_card_ink" android:contentDescription="Open menu" android:src="@drawable/ic_menu" app:tint="@color/mustard"/>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="bottom" android:orientation="horizontal" android:padding="16dp">
-            <Button android:id="@+id/btn_add" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Add spot (demo)"/>
-            <Button android:id="@+id/btn_place" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="8dp" android:text="Place details (demo)"/>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true"
+        android:background="#DDE6DF">
+
+        <fragment
+            android:id="@+id/map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <ImageButton
+            android:id="@+id/btn_menu"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:layout_margin="16dp"
+            android:background="@drawable/bg_card_ink"
+            android:contentDescription="Open menu"
+            android:src="@drawable/ic_menu"
+            app:tint="@color/mustard" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:orientation="horizontal"
+            android:padding="16dp">
+
+            <Button
+                android:id="@+id/btn_add"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Add spot (demo)" />
+
+            <Button
+                android:id="@+id/btn_place"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Place details (demo)" />
         </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/fragment_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
     </FrameLayout>
+
 
     <include layout="@layout/view_drawer" android:layout_width="300dp" android:layout_height="match_parent" android:layout_gravity="start"/>
 </androidx.drawerlayout.widget.DrawerLayout>
