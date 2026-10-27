@@ -73,6 +73,7 @@ public class LoginActivity extends AppCompatActivity {
         if ((username.equals(storedUsername) && password.equals(storedPassword) && !storedPassword.isEmpty()) || (username.equals("user") && password.equals("password")))
         {
             Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
+            preferences.edit().putBoolean("isLoggedIn", true).apply();
 
             Intent intent = new Intent(LoginActivity.this, MainActivity.class);
             startActivity(intent);
