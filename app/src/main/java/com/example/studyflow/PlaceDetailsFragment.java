@@ -18,8 +18,17 @@ import com.google.android.material.button.MaterialButton;
 /** UI only: shows dummy data unless values are passed in from Add Spot. */
 public class PlaceDetailsFragment extends Fragment {
 
+    private Spot spot;
+
+
+
     public PlaceDetailsFragment() {
         // Required empty public constructor
+    }
+
+    public void setSpot(Spot spot)
+    {
+        this.spot = spot;
     }
 
     public static PlaceDetailsFragment newInstance(@Nullable String name, @Nullable String category,
@@ -44,14 +53,26 @@ public class PlaceDetailsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        Bundle args = getArguments();
-        if (args != null) {
-            String name = args.getString("name");
-            String category = args.getString("category");
-            String review = args.getString("review");
-            if (name != null) ((TextView) view.findViewById(R.id.txt_name)).setText(name);
-            if (category != null) ((TextView) view.findViewById(R.id.txt_category)).setText(category.toUpperCase());
-            if (review != null && !review.isEmpty()) ((TextView) view.findViewById(R.id.txt_review)).setText(review);
+        if (spot != null)
+        {
+            ((TextView) view.findViewById(R.id.txt_name))
+                    .setText(spot.getName());
+
+            ((TextView) view.findViewById(R.id.txt_category))
+                    .setText(spot.getCategory().toUpperCase());
+
+            ((TextView) view.findViewById(R.id.txt_review))
+                    .setText(spot.getReview());
+
+            ((TextView) view.findViewById(R.id.likesCount)).setText(String.valueOf(spot.getLikes()));
+
+            ((TextView) view.findViewById(R.id.savesCount)).setText(String.valueOf(spot.getSaves()));
+
+            ((TextView) view.findViewById(R.id.photosCount)).setText(String.valueOf(spot.images.size()));
+
+            ((TextView) view.findViewById(R.id.spotCreator)).setText((spot.getCreator()));
+
+            ((TextView) view.findViewById(R.id.noteCreator)).setText((spot.getCreator()));
         }
 
         view.findViewById(R.id.btn_back).setOnClickListener(v ->
@@ -59,7 +80,7 @@ public class PlaceDetailsFragment extends Fragment {
 
         RecyclerView rv = view.findViewById(R.id.rv_photos);
         rv.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
-        rv.setAdapter(new PolaroidAdapter());
+        rv.setAdapter(new PolaroidAdapter(spot.images));
 
         // Like and Save toggle between two looks (see res/color/icon_toggle.xml)
         view.findViewById(R.id.btn_like).setOnClickListener(v -> v.setSelected(!v.isSelected()));
