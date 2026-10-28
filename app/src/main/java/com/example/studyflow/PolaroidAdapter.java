@@ -8,11 +8,16 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-/** Dummy photo cards: colored blocks stand in for real pictures. */
+import java.util.ArrayList;
+
 public class PolaroidAdapter extends RecyclerView.Adapter<PolaroidAdapter.VH> {
 
-    private final String[] captions = {"Iced coffee, 2 pm", "The corner table", "Rainy day view", "Cake of the day"};
-    private final int[] colors = {0xFFE7C9A9, 0xFFCFE6C4, 0xFFC7C2E3, 0xFFD9B48C};
+    private ArrayList<Photo> photos;
+
+    public PolaroidAdapter(ArrayList<Photo> photos)
+    {
+        this.photos = photos;
+    }
 
     @NonNull
     @Override
@@ -23,14 +28,16 @@ public class PolaroidAdapter extends RecyclerView.Adapter<PolaroidAdapter.VH> {
 
     @Override
     public void onBindViewHolder(@NonNull VH h, int position) {
-        h.photo.setBackgroundColor(colors[position % colors.length]);
-        h.caption.setText(captions[position % captions.length]);
+        Photo photo = photos.get(position);
+        h.photo.setBackgroundResource(photo.image);
+        h.caption.setText(photo.caption);
+
         h.itemView.setRotation(position % 2 == 0 ? -2f : 2f);
     }
 
     @Override
     public int getItemCount() {
-        return captions.length;
+        return photos.size();
     }
 
     static class VH extends RecyclerView.ViewHolder {

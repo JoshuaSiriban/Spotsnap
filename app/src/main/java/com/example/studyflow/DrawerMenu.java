@@ -1,5 +1,6 @@
 package com.example.studyflow;
 
+import android.content.Intent;
 import android.view.View;
 import android.widget.Toast;
 
@@ -10,13 +11,14 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
-/** Wires up the menu drawer and opens fragments. Call DrawerMenu.setup(this, drawer) in MainActivity. */
 public class DrawerMenu {
 
-    /** The FrameLayout in activity_main.xml that holds fragments. Change if your id is different. */
     public static final int CONTAINER_ID = R.id.fragment_container;
 
     public static void open(FragmentActivity activity, Fragment fragment) {
+        activity.findViewById(CONTAINER_ID).setVisibility(View.VISIBLE);
+        View overlay = activity.findViewById(R.id.map_overlay);
+        if (overlay != null) overlay.setVisibility(View.GONE);
         activity.getSupportFragmentManager()
                 .beginTransaction()
                 .replace(CONTAINER_ID, fragment)
@@ -28,13 +30,21 @@ public class DrawerMenu {
         bind(activity, drawer, R.id.drawer_saved, new SavedLocationsFragment());
         bind(activity, drawer, R.id.drawer_album, new AlbumFragment());
         bind(activity, drawer, R.id.drawer_search, new SearchFragment());
+        bind(activity, drawer, R.id.drawer_profile, new ProfileFragment());
+        bind(activity, drawer, R.id.drawer_settings, new SettingsFragment());
+
+        drawer.findViewById(R.id.btn_close_drawer).setOnClickListener(v ->
+                drawer.closeDrawer(GravityCompat.START));
 
         drawer.findViewById(R.id.drawer_logout).setOnClickListener(v -> {
             drawer.closeDrawer(GravityCompat.START);
             Toast.makeText(activity, "Logged out (UI only)", Toast.LENGTH_SHORT).show();
+
+            Intent intent = new Intent(activity, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); // ensure user cant go back
+            activity.startActivity(intent);
         });
 
-        // Back button closes the drawer first, only while the drawer is open
         OnBackPressedCallback callback = new OnBackPressedCallback(false) {
             @Override
             public void handleOnBackPressed() {

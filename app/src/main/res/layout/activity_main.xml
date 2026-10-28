@@ -1,17 +1,170 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/drawer_layout" android:layout_width="match_parent" android:layout_height="match_parent">
 
-    <FrameLayout android:id="@+id/fragment_container" android:layout_width="match_parent" android:layout_height="match_parent" android:fitsSystemWindows="true" android:background="#DDE6DF">
-        <!-- Demo map placeholder. Your real Map screen replaces this. -->
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:text="Map screen goes here" android:textColor="@color/muted_dark" android:textSize="16sp"/>
-        <ImageButton android:id="@+id/btn_menu" android:layout_width="52dp" android:layout_height="52dp" android:layout_margin="16dp" android:background="@drawable/bg_card_ink" android:contentDescription="Open menu" android:src="@drawable/ic_menu" app:tint="@color/mustard"/>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="bottom" android:orientation="horizontal" android:padding="16dp">
-            <Button android:id="@+id/btn_add" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Add spot (demo)"/>
-            <Button android:id="@+id/btn_place" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="8dp" android:text="Place details (demo)"/>
-        </LinearLayout>
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true"
+        android:background="#DDE6DF">
+
+        <fragment
+            android:id="@+id/map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <FrameLayout
+            android:id="@+id/map_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:id="@+id/search_bar"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_gravity="top"
+                android:layout_margin="16dp"
+                android:background="@drawable/bg_search_bar"
+                android:elevation="8dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="6dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_search"
+                    app:tint="@color/muted_dark"
+                    android:importantForAccessibility="no" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:gravity="center_vertical"
+                    android:text="Search SpotSnap"
+                    android:textColor="@color/muted_dark"
+                    android:textSize="16sp" />
+
+                <ImageButton
+                    android:id="@+id/btn_profile"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_badge"
+                    android:contentDescription="Open menu"
+                    android:padding="8dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_person"
+                    app:tint="@color/ink" />
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/btn_crosshair"
+                android:layout_width="61dp"
+                android:layout_height="61dp"
+                android:layout_gravity="bottom|end"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="96dp"
+                android:background="@android:color/transparent"
+                android:src="@drawable/togglecrosshair"
+                android:contentDescription="Toggle crosshair"
+                android:elevation="6dp"
+                android:padding="0dp"
+                android:scaleType="fitCenter"
+                app:tint="@null" />
+
+            <ImageButton
+                android:id="@+id/btn_add"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="bottom|end"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="24dp"
+                android:background="@drawable/bg_badge"
+                android:contentDescription="Add a spot"
+                android:elevation="6dp"
+                android:padding="16dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_add"
+                app:tint="@color/ink" />
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top"
+                android:layout_marginTop="76dp"
+                android:clipToPadding="false"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:scrollbars="none">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/filter_group"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:chipSpacingHorizontal="8dp"
+                    app:singleLine="true">
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/filter_food"
+                        style="@style/Widget.MaterialComponents.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Food"
+                        android:textColor="@color/ink"
+                        app:chipBackgroundColor="@color/chip_bg"
+                        app:chipStrokeColor="@color/line"
+                        app:chipStrokeWidth="1dp" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/filter_hangout"
+                        style="@style/Widget.MaterialComponents.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Hang Out"
+                        android:textColor="@color/ink"
+                        app:chipBackgroundColor="@color/chip_bg"
+                        app:chipStrokeColor="@color/line"
+                        app:chipStrokeWidth="1dp" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/filter_tourist"
+                        style="@style/Widget.MaterialComponents.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tourist Spot"
+                        android:textColor="@color/ink"
+                        app:chipBackgroundColor="@color/chip_bg"
+                        app:chipStrokeColor="@color/line"
+                        app:chipStrokeWidth="1dp" />
+                </com.google.android.material.chip.ChipGroup>
+            </HorizontalScrollView>
+
+            <ImageView
+                android:id="@+id/crosshair"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:translationY="-24dp"
+                android:src="@drawable/crosshair"
+                android:visibility="gone"
+                android:clickable="false"
+                android:contentDescription="Location crosshair" />
+
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/fragment_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
     </FrameLayout>
 
-    <include layout="@layout/view_drawer" android:layout_width="300dp" android:layout_height="match_parent" android:layout_gravity="start"/>
+    <include layout="@layout/view_drawer" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_gravity="start"/>
 </androidx.drawerlayout.widget.DrawerLayout>

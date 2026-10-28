@@ -15,11 +15,11 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
-/** UI only: nothing is saved. "Pin it" opens Place Details with what was typed. */
+import java.util.ArrayList;
+
 public class AddSpotFragment extends Fragment {
 
     public AddSpotFragment() {
-        // Required empty public constructor
     }
 
     @Nullable
@@ -55,7 +55,13 @@ public class AddSpotFragment extends Fragment {
             Chip chip = view.findViewById(chips.getCheckedChipId());
             String category = chip == null ? "Other" : chip.getText().toString();
             String review = String.valueOf(reviewInput.getText()).trim();
-            DrawerMenu.open(requireActivity(), PlaceDetailsFragment.newInstance(name, category, review));
+            ArrayList<Photo> photos = new ArrayList<>();
+            photos.add(new Photo(R.drawable.dlsu, name));
+            Spot spot = new Spot(name, "Jerimaya", review, category, 14.5995, 120.9842, photos, 0, 0);
+
+            PlaceDetailsFragment details = PlaceDetailsFragment.newInstance(name, category, review);
+            details.setSpot(spot);
+            DrawerMenu.open(requireActivity(), details);
         });
     }
 
