@@ -34,6 +34,14 @@ public class SignupActivity extends AppCompatActivity {
         EditText passwordInput = findViewById(R.id.passwordInput);
         Button signupButton = findViewById(R.id.signupButton);
 
+        //To ensure user input is not erased after pause
+        SharedPreferences signupData = getSharedPreferences("SignupData", MODE_PRIVATE);
+        usernameInput.setText(signupData.getString("username", ""));
+        fullNameInput.setText(signupData.getString("fullname", ""));
+        emailInput.setText(signupData.getString("email", ""));
+        passwordInput.setText(signupData.getString("password", ""));
+
+
         signupButton.setOnClickListener(v -> {
             registerAccount(usernameInput, fullNameInput, emailInput, passwordInput);
         });
@@ -44,6 +52,26 @@ public class SignupActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+    }
+
+    @Override
+    protected void onPause()
+    {
+        super.onPause();
+
+        EditText usernameInput = findViewById(R.id.usernameInput);
+        EditText fullNameInput = findViewById(R.id.fullNameInput);
+        EditText emailInput = findViewById(R.id.emailInput);
+        EditText passwordInput = findViewById(R.id.passwordInput);
+
+        SharedPreferences signupData = getSharedPreferences("SignupData", MODE_PRIVATE);
+        SharedPreferences.Editor editor = signupData.edit();
+
+        editor.putString("username", usernameInput.getText().toString());
+        editor.putString("fullname", fullNameInput.getText().toString());
+        editor.putString("email", emailInput.getText().toString());
+        editor.putString("password", passwordInput.getText().toString());
+        editor.apply();
     }
 
     private void registerAccount(EditText usernameInput, EditText fullNameInput, EditText emailInput, EditText passwordInput)
