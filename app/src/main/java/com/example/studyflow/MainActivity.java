@@ -6,6 +6,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -73,6 +75,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
 
         mapFragment.getMapAsync(this);
+
+        ImageView crosshair = findViewById(R.id.crosshair);
+        ImageButton crosshairButton = findViewById(R.id.btn_crosshair);
+
+        crosshairButton.setOnClickListener(v -> {
+
+            if (crosshair.getVisibility() == View.VISIBLE) {
+                crosshairButton.setImageResource(R.drawable.togglecrosshair);
+                crosshair.setVisibility(View.GONE);
+            } else {
+                crosshair.setVisibility(View.VISIBLE);
+                crosshairButton.setImageResource(R.drawable.togglecrosshair2);
+            }
+        });
     }
 
     private void updateMapUi() {
