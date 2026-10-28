@@ -64,6 +64,21 @@
             </LinearLayout>
 
             <ImageButton
+                android:id="@+id/btn_crosshair"
+                android:layout_width="61dp"
+                android:layout_height="61dp"
+                android:layout_gravity="bottom|end"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="96dp"
+                android:background="@android:color/transparent"
+                android:src="@drawable/togglecrosshair"
+                android:contentDescription="Toggle crosshair"
+                android:elevation="6dp"
+                android:padding="0dp"
+                android:scaleType="fitCenter"
+                app:tint="@null" />
+
+            <ImageButton
                 android:id="@+id/btn_add"
                 android:layout_width="56dp"
                 android:layout_height="56dp"
@@ -129,6 +144,17 @@
                         app:chipStrokeWidth="1dp" />
                 </com.google.android.material.chip.ChipGroup>
             </HorizontalScrollView>
+
+            <ImageView
+                android:id="@+id/crosshair"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:translationY="-24dp"
+                android:src="@drawable/crosshair"
+                android:visibility="gone"
+                android:clickable="false"
+                android:contentDescription="Location crosshair" />
 
         </FrameLayout>
 
