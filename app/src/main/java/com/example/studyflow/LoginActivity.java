@@ -33,6 +33,11 @@ public class LoginActivity extends AppCompatActivity {
         EditText passwordInput = findViewById(R.id.passwordInput);
         Button loginButton = findViewById(R.id.loginButton);
 
+         // To ensure inputs aren't lost on pause/
+        SharedPreferences loginData = getSharedPreferences("LoginData", MODE_PRIVATE);
+        usernameInput.setText(loginData.getString("username", ""));
+        passwordInput.setText(loginData.getString("password", ""));
+
         loginButton.setOnClickListener(v -> {
             loginAccount(usernameInput, passwordInput);
         });
@@ -42,6 +47,22 @@ public class LoginActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+    }
+
+    @Override
+    protected void onPause()
+    {
+        super.onPause();
+
+        EditText usernameInput = findViewById(R.id.usernameInput);
+        EditText passwordInput = findViewById(R.id.passwordInput);
+
+        SharedPreferences loginData = getSharedPreferences("LoginData", MODE_PRIVATE);
+        SharedPreferences.Editor editor = loginData.edit();
+
+        editor.putString("username", usernameInput.getText().toString());
+        editor.putString("password", passwordInput.getText().toString());
+        editor.apply();
     }
 
     @Override
