@@ -95,7 +95,26 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         ArrayList<Photo> photos = new ArrayList<>();
         photos.add(new Photo(R.drawable.dlsu, "La Salle Building in its full glory"));
-        photos.add(new Photo(R.drawable.dlsu, "Cool place"));
+        photos.add(new Photo(R.drawable.dlsu2, "Henry Building"));
+
+        ArrayList<Photo> cafePhotos = new ArrayList<>();
+        cafePhotos.add(new Photo(R.drawable.cafe1, "Love their coffee"));
+
+        ArrayList<Photo> rooftopPhotos = new ArrayList<>();
+        rooftopPhotos.add(new Photo(R.drawable.rooftop1, "Unmatched Atmosphere"));
+        rooftopPhotos.add(new Photo(R.drawable.rooftop2, "Ganda ng viewww"));
+
+        ArrayList<Photo> intramurosPhotos = new ArrayList<>();
+        intramurosPhotos.add(new Photo(R.drawable.intramuros1, ""));
+        intramurosPhotos.add(new Photo(R.drawable.intramuros2, "History in front of me"));
+        intramurosPhotos.add(new Photo(R.drawable.intramuros3, "..."));
+
+        ArrayList<Photo> ramenPhotos = new ArrayList<>();
+        ramenPhotos.add(new Photo(R.drawable.ramen1, "I love ramen talaga"));
+
+        ArrayList<Photo> venicePhotos = new ArrayList<>();
+        venicePhotos.add(new Photo(R.drawable.venice1, "Parang sa Italy"));
+        venicePhotos.add(new Photo(R.drawable.venice2, ".."));
 
         Bitmap othersBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.othersmarker);
         Bitmap smallOthersBitmap = Bitmap.createScaledBitmap(othersBitmap, 100, 120, false);
@@ -113,23 +132,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Marker marker = googleMap.addMarker(new MarkerOptions().position(new LatLng(dlsu.getLatitude(), dlsu.getLongitude())).title(dlsu.getName()).icon(BitmapDescriptorFactory.fromBitmap(smallOthersBitmap)));
         marker.setTag(dlsu);
 
-        Spot cafe = new Spot("Cafe Ocampo", "Jerimaya", "A nice place to enjoy coffee and relax", "Food", 14.56482, 120.99968, photos, 0, 0);
+        Spot cafe = new Spot("Cafe Ocampo", "Jerimaya", "A nice place to enjoy coffee and relax", "Food", 14.56482, 120.99968, cafePhotos, 0, 0);
         Marker cafeMarker = googleMap.addMarker(new MarkerOptions().position(new LatLng(cafe.getLatitude(), cafe.getLongitude())).title(cafe.getName()).icon(BitmapDescriptorFactory.fromBitmap(smallFoodBitmap)));
         cafeMarker.setTag(cafe);
 
-        Spot rooftop = new Spot("Rooftop Lounge Makati", "Jerimaya", "A rooftop lounge with views of the Makati skyline", "Food", 14.56469, 121.02925, photos, 0, 0);
+        Spot rooftop = new Spot("Rooftop Lounge Makati", "Jerimaya", "A rooftop lounge with views of the Makati skyline", "Food", 14.56469, 121.02925, rooftopPhotos, 0, 0);
         Marker rooftopMarker = googleMap.addMarker(new MarkerOptions().position(new LatLng(rooftop.getLatitude(), rooftop.getLongitude())).title(rooftop.getName()).icon(BitmapDescriptorFactory.fromBitmap(smallFoodBitmap)));
         rooftopMarker.setTag(rooftop);
 
-        Spot intramuros = new Spot("Intramuros Walls", "Jerimaya", "Medjo scary yung haunted area", "Tourist Spot", 14.583333, 120.983333, photos, 0, 0);
+        Spot intramuros = new Spot("Intramuros Walls", "Jerimaya", "Medjo scary yung haunted area", "Tourist Spot", 14.583333, 120.983333, intramurosPhotos, 0, 0);
         Marker intramurosMarker = googleMap.addMarker(new MarkerOptions().position(new LatLng(intramuros.getLatitude(), intramuros.getLongitude())).title(intramuros.getName()).icon(BitmapDescriptorFactory.fromBitmap(smallTouristBitmap)));
         intramurosMarker.setTag(intramuros);
 
-        Spot ramen = new Spot("Ramen Corner Quezon City", "Jerimaya", "A nice place to enjoy a warm bowl of ramen", "Food", 14.6565, 121.0325, photos, 0, 0);
+        Spot ramen = new Spot("Ramen Corner Quezon City", "Jerimaya", "A nice place to enjoy a warm bowl of ramen", "Food", 14.6565, 121.0325, ramenPhotos, 0, 0);
         Marker ramenMarker = googleMap.addMarker(new MarkerOptions().position(new LatLng(ramen.getLatitude(), ramen.getLongitude())).title(ramen.getName()).icon(BitmapDescriptorFactory.fromBitmap(smallFoodBitmap)));
         ramenMarker.setTag(ramen);
 
-        Spot venice = new Spot("Venice Grand Canal Mall", "Jerimaya", "A popular hangout spot for food, shopping, and taking pictures by the canal.", "Hang Out", 14.5337, 121.0565, photos, 0, 0);
+        Spot venice = new Spot("Venice Grand Canal Mall", "Jerimaya", "A popular hangout spot for food, shopping, and taking pictures by the canal.", "Hang Out", 14.5337, 121.0565, venicePhotos, 0, 0);
         Marker veniceMarker = googleMap.addMarker(new MarkerOptions().position(new LatLng(venice.getLatitude(), venice.getLongitude())).title(venice.getName()).icon(BitmapDescriptorFactory.fromBitmap(smallHangoutBitmap)));
         veniceMarker.setTag(venice);
 
