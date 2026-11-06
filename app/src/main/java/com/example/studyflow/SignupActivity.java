@@ -100,6 +100,8 @@ public class SignupActivity extends AppCompatActivity {
                     .putString("password", password)
                     .apply();
 
+            SpotRepository.saveUser(username, fullName, email);
+
             Toast.makeText(this, "Account created!", Toast.LENGTH_SHORT).show();
 
             Intent intent = new Intent(SignupActivity.this, LoginActivity.class);

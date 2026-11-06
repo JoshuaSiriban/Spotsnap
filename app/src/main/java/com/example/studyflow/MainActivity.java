@@ -27,6 +27,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -167,6 +168,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Spot venice = new Spot("Venice Grand Canal Mall", "Jerimaya", "A popular hangout spot for food, shopping, and taking pictures by the canal.", "Hang Out", 14.5337, 121.0565, venicePhotos, 0, 0);
         Marker veniceMarker = googleMap.addMarker(new MarkerOptions().position(new LatLng(venice.getLatitude(), venice.getLongitude())).title(venice.getName()).icon(BitmapDescriptorFactory.fromBitmap(smallHangoutBitmap)));
         veniceMarker.setTag(venice);
+
+        ArrayList<Spot> localSpots = new ArrayList<>(Arrays.asList(dlsu, cafe, rooftop, intramuros, ramen, venice));
+        SpotRepository.seedIfEmpty(this, localSpots);
+        SpotRepository.loadSpots(this, remoteSpots -> {
+            for (Spot remote : remoteSpots) {
+                boolean alreadyOnMap = false;
+                for (Spot local : localSpots) {
+                    if (local.getName().equals(remote.getName())) alreadyOnMap = true;
+                }
+                if (alreadyOnMap) continue;
+
+                Bitmap icon = smallOthersBitmap;
+                if ("Food".equals(remote.getCategory())) icon = smallFoodBitmap;
+                else if ("Tourist Spot".equals(remote.getCategory())) icon = smallTouristBitmap;
+                else if ("Hang Out".equals(remote.getCategory())) icon = smallHangoutBitmap;
+
+                Marker m = googleMap.addMarker(new MarkerOptions()
+                        .position(new LatLng(remote.getLatitude(), remote.getLongitude()))
+                        .title(remote.getName())
+                        .icon(BitmapDescriptorFactory.fromBitmap(icon)));
+                if (m != null) m.setTag(remote);
+            }
+        });
 
         googleMap.setOnMarkerClickListener(clickedMarker -> {
             Spot spot = (Spot) clickedMarker.getTag();

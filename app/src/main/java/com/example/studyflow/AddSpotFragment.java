@@ -14,6 +14,7 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 
 import java.util.ArrayList;
 
@@ -58,6 +59,10 @@ public class AddSpotFragment extends Fragment {
             ArrayList<Photo> photos = new ArrayList<>();
             photos.add(new Photo(R.drawable.dlsu, name));
             Spot spot = new Spot(name, "Jerimaya", review, category, 14.5995, 120.9842, photos, 0, 0);
+
+            MaterialButtonToggleGroup privacy = view.findViewById(R.id.toggle_privacy);
+            boolean isPublic = privacy.getCheckedButtonId() == R.id.btn_public;
+            SpotRepository.saveSpot(requireContext(), spot, isPublic);
 
             PlaceDetailsFragment details = PlaceDetailsFragment.newInstance(name, category, review);
             details.setSpot(spot);

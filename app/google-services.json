@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "811049091534",
+    "project_id": "spotsnap-47275",
+    "storage_bucket": "spotsnap-47275.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:811049091534:android:9753a22bda84e55bc1eb9f",
+        "android_client_info": {
+          "package_name": "com.example.studyflow"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDlHo88D4dT5p-5w5288pyfMBEZEJw3DdY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
