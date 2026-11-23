@@ -24,22 +24,12 @@ public class SpotRepository {
         return FirebaseFirestore.getInstance();
     }
 
-    // ---------------------------------------------------------------- users
-
-    public static void saveUser(String username, String fullName, String email) {
-        Map<String, Object> user = new HashMap<>();
-        user.put("username", username);
-        user.put("fullName", fullName);
-        user.put("email", email);
-        user.put("createdAt", FieldValue.serverTimestamp());
-
-        db().collection("users").document(username).set(user)
-                .addOnSuccessListener(unused -> Log.d(TAG, "User saved: " + username))
-                .addOnFailureListener(e -> Log.e(TAG, "Could not save user", e));
-    }
+    // ---------------------------------------------------------------- spots
 
     public static void saveSpot(Context context, Spot spot, boolean isPublic) {
-        db().collection("spots").add(toMap(context, spot, isPublic))
+        Map<String, Object> data = toMap(context, spot, isPublic);
+        data.put("creatorId", UserSession.getUid()); // owner, used later for private posts / edit / delete
+        db().collection("spots").add(data)
                 .addOnSuccessListener(ref -> Log.d(TAG, "Spot saved: " + ref.getId()))
                 .addOnFailureListener(e -> Log.e(TAG, "Could not save spot", e));
     }

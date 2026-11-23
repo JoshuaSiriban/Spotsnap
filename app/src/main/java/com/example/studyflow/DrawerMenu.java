@@ -1,8 +1,7 @@
 package com.example.studyflow;
 
-import android.content.Intent;
 import android.view.View;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
@@ -38,12 +37,10 @@ public class DrawerMenu {
 
         drawer.findViewById(R.id.drawer_logout).setOnClickListener(v -> {
             drawer.closeDrawer(GravityCompat.START);
-            Toast.makeText(activity, "Logged out (UI only)", Toast.LENGTH_SHORT).show();
-
-            Intent intent = new Intent(activity, LoginActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); // ensure user cant go back
-            activity.startActivity(intent);
+            AuthRepository.logOut(activity);
         });
+
+        bindUser(drawer);
 
         OnBackPressedCallback callback = new OnBackPressedCallback(false) {
             @Override
@@ -56,6 +53,13 @@ public class DrawerMenu {
             @Override public void onDrawerOpened(View v) { callback.setEnabled(true); }
             @Override public void onDrawerClosed(View v) { callback.setEnabled(false); }
         });
+    }
+
+    /** Shows the logged-in user's name and username in the drawer header. */
+    public static void bindUser(DrawerLayout drawer) {
+        android.content.Context context = drawer.getContext();
+        ((TextView) drawer.findViewById(R.id.drawer_name)).setText(UserSession.getDisplayName(context));
+        ((TextView) drawer.findViewById(R.id.drawer_handle)).setText("@" + UserSession.getUsername(context));
     }
 
     private static void bind(AppCompatActivity activity, DrawerLayout drawer, int id, Fragment fragment) {

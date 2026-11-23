@@ -42,7 +42,10 @@ public class SettingsFragment extends Fragment {
         view.findViewById(R.id.row_units).setOnClickListener(v ->
                 units.setText(units.getText().toString().equals("km") ? "mi" : "km"));
 
-        view.findViewById(R.id.btn_logout).setOnClickListener(v -> toast("Logged out (UI only)"));
+        ((TextView) view.findViewById(R.id.row_email_value)).setText(UserSession.getEmail());
+
+        view.findViewById(R.id.btn_logout).setOnClickListener(v ->
+                AuthRepository.logOut(requireActivity()));
         view.findViewById(R.id.btn_delete).setOnClickListener(v -> toast("Delete account (UI only)"));
     }
 

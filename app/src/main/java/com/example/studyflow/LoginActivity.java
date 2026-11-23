@@ -1,8 +1,8 @@
 package com.example.studyflow;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Patterns;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -16,31 +16,30 @@ import androidx.core.view.WindowInsetsCompat;
 
 public class LoginActivity extends AppCompatActivity {
 
+    private EditText emailInput;
+    private EditText passwordInput;
+    private Button loginButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Already logged in from a previous session: skip straight to the map.
+        if (UserSession.isLoggedIn()) {
+            openMain();
+            return;
+        }
+
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_login);
 
+        emailInput = findViewById(R.id.emailInput);
+        passwordInput = findViewById(R.id.passwordInput);
+        loginButton = findViewById(R.id.loginButton);
         TextView createTv = findViewById(R.id.createTv);
 
-        createTv.setOnClickListener(v -> {
-            Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
-            startActivity(intent);
-        });
-
-        EditText usernameInput = findViewById(R.id.usernameInput);
-        EditText passwordInput = findViewById(R.id.passwordInput);
-        Button loginButton = findViewById(R.id.loginButton);
-
-         // To ensure inputs aren't lost on pause/
-        SharedPreferences loginData = getSharedPreferences("LoginData", MODE_PRIVATE);
-        usernameInput.setText(loginData.getString("username", ""));
-        passwordInput.setText(loginData.getString("password", ""));
-
-        loginButton.setOnClickListener(v -> {
-            loginAccount(usernameInput, passwordInput);
-        });
+        createTv.setOnClickListener(v -> startActivity(new Intent(this, SignupActivity.class)));
+        loginButton.setOnClickListener(v -> attemptLogin());
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -49,61 +48,43 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    protected void onPause()
-    {
-        super.onPause();
-
-        EditText usernameInput = findViewById(R.id.usernameInput);
-        EditText passwordInput = findViewById(R.id.passwordInput);
-
-        SharedPreferences loginData = getSharedPreferences("LoginData", MODE_PRIVATE);
-        SharedPreferences.Editor editor = loginData.edit();
-
-        editor.putString("username", usernameInput.getText().toString());
-        editor.putString("password", passwordInput.getText().toString());
-        editor.apply();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        EditText usernameInput = findViewById(R.id.usernameInput);
-        EditText passwordInput = findViewById(R.id.passwordInput);
-
-        usernameInput.setEnabled(true);
-        usernameInput.setFocusable(true);
-        usernameInput.setFocusableInTouchMode(true);
-
-        passwordInput.setEnabled(true);
-        passwordInput.setFocusable(true);
-        passwordInput.setFocusableInTouchMode(true);
-    }
-
-    private void loginAccount(EditText usernameInput, EditText passwordInput)
-    {
-        String username = usernameInput.getText().toString().trim();
+    private void attemptLogin() {
+        String email = emailInput.getText().toString().trim();
         String password = passwordInput.getText().toString();
 
-        SharedPreferences preferences = getSharedPreferences("SpotSnapAccount", MODE_PRIVATE);
-
-        String storedUsername = preferences.getString("username", "");
-        String storedPassword = preferences.getString("password", "");
-
-        if ((username.equals(storedUsername) && password.equals(storedPassword) && !storedPassword.isEmpty()) || (username.equals("user") && password.equals("password")))
-        {
-            Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
-            preferences.edit().putBoolean("isLoggedIn", true).apply();
-
-            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-            startActivity(intent);
-            finish();
-
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            emailInput.setError("Enter a valid email");
+            return;
         }
-        else
-        {
-            Toast.makeText(this, "Invalid email or password", Toast.LENGTH_SHORT).show();
+        if (password.isEmpty()) {
+            passwordInput.setError("Enter your password");
+            return;
         }
+
+        setBusy(true);
+        AuthRepository.logIn(this, email, password, new AuthRepository.Callback() {
+            @Override
+            public void onSuccess() {
+                openMain();
+            }
+
+            @Override
+            public void onError(String message) {
+                setBusy(false);
+                Toast.makeText(LoginActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void setBusy(boolean busy) {
+        loginButton.setEnabled(!busy);
+        loginButton.setText(busy ? "Logging in..." : "Login");
+        emailInput.setEnabled(!busy);
+        passwordInput.setEnabled(!busy);
+    }
+
+    private void openMain() {
+        startActivity(new Intent(this, MainActivity.class));
+        finish();
     }
 }

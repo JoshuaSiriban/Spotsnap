@@ -33,22 +33,23 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Username"
+        android:text="Email"
         android:fontFamily="serif"
         android:textStyle="bold"
         android:textSize="16sp" />
 
     <EditText
-        android:id="@+id/usernameInput"
+        android:id="@+id/emailInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Enter username"
+        android:hint="you@example.com"
+        android:inputType="textEmailAddress"
         android:saveEnabled="true" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Enter Password"
+        android:text="Password"
         android:fontFamily="serif"
         android:textStyle="bold"
         android:textSize="16sp" />

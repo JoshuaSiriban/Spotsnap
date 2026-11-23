@@ -44,15 +44,15 @@
                         android:textColor="@color/muted_dark"
                         android:textSize="22sp" />
                 </LinearLayout>
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginStart="16dp" android:layout_marginEnd="16dp" android:background="@color/line"/>
+                <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginStart="16dp" android:layout_marginEnd="16dp" android:background="@color/line"/>
                 <LinearLayout android:id="@+id/row_password" android:layout_width="match_parent" android:layout_height="52dp" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="16dp" android:paddingEnd="16dp" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackground">
                     <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Change password" android:textColor="@color/ink" android:textSize="15sp"/>
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="›" android:textColor="@color/muted_dark" android:textSize="22sp"/>
                 </LinearLayout>
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginStart="16dp" android:layout_marginEnd="16dp" android:background="@color/line"/>
+                <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginStart="16dp" android:layout_marginEnd="16dp" android:background="@color/line"/>
                 <LinearLayout android:id="@+id/row_email" android:layout_width="match_parent" android:layout_height="52dp" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="16dp" android:paddingEnd="16dp" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackground">
                     <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Email" android:textColor="@color/ink" android:textSize="15sp"/>
-                    <TextView android:id="@+id/row_email_value" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="jerimaya@email.com" android:textColor="@color/muted_dark" android:textSize="13sp"/>
+                    <TextView android:id="@+id/row_email_value" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="" android:textColor="@color/muted_dark" android:textSize="13sp"/>
                 </LinearLayout>
             </LinearLayout>
 
@@ -62,7 +62,7 @@
                     <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="New posts are public by default" android:textColor="@color/ink" android:textSize="15sp"/>
                     <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/chk_public_posts" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" app:buttonTint="@color/ink"/>
                 </LinearLayout>
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginStart="16dp" android:layout_marginEnd="16dp" android:background="@color/line"/>
+                <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginStart="16dp" android:layout_marginEnd="16dp" android:background="@color/line"/>
                 <LinearLayout android:id="@+id/row_public_profile" android:layout_width="match_parent" android:layout_height="52dp" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="16dp" android:paddingEnd="8dp" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackground">
                     <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Show my profile to everyone" android:textColor="@color/ink" android:textSize="15sp"/>
                     <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/chk_public_profile" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" app:buttonTint="@color/ink"/>
@@ -75,7 +75,7 @@
                     <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Notifications" android:textColor="@color/ink" android:textSize="15sp"/>
                     <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/chk_notifications" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" app:buttonTint="@color/ink"/>
                 </LinearLayout>
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginStart="16dp" android:layout_marginEnd="16dp" android:background="@color/line"/>
+                <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginStart="16dp" android:layout_marginEnd="16dp" android:background="@color/line"/>
                 <LinearLayout android:id="@+id/row_units" android:layout_width="match_parent" android:layout_height="52dp" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="16dp" android:paddingEnd="16dp" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackground">
                     <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Distance units" android:textColor="@color/ink" android:textSize="15sp"/>
                     <TextView android:id="@+id/row_units_value" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="km" android:textColor="@color/muted_dark" android:textSize="13sp"/>

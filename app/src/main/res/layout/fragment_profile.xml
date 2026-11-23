@@ -11,8 +11,8 @@
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center_horizontal" android:paddingStart="24dp" android:paddingEnd="24dp" android:paddingBottom="24dp">
 
             <ImageView android:layout_width="96dp" android:layout_height="96dp" android:layout_marginTop="8dp" android:padding="24dp" android:background="@drawable/bg_avatar" android:src="@drawable/ic_person" app:tint="@color/cream" android:contentDescription="Profile picture"/>
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="Jerimaya Dennielle V. Flores" android:textColor="@color/ink" android:textSize="22sp" android:textStyle="bold" android:fontFamily="serif"/>
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="@jerimaya" android:textColor="@color/muted_dark" android:textSize="14sp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:id="@+id/profile_name" android:text="" android:textColor="@color/ink" android:textSize="22sp" android:textStyle="bold" android:fontFamily="serif"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:id="@+id/profile_handle" android:text="" android:textColor="@color/muted_dark" android:textSize="14sp"/>
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:background="@drawable/bg_stats">
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center" android:paddingTop="14dp" android:paddingBottom="14dp"><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="14" android:textColor="@color/ink" android:textSize="24sp" android:textStyle="bold" android:fontFamily="serif"/><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Shared" android:textColor="@color/muted_dark" android:textSize="12sp"/></LinearLayout>
@@ -26,17 +26,17 @@
 
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="26dp" android:layout_marginBottom="8dp" android:text="RECENT POSTS" android:textColor="@color/muted_dark" android:textSize="12sp" android:textStyle="bold" android:letterSpacing="0.15"/>
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-                <View android:layout_width="0dp" android:layout_height="110dp" android:layout_weight="1" android:background="#E3CBAE"/>
-                <View android:layout_width="0dp" android:layout_height="110dp" android:layout_weight="1" android:layout_marginStart="8dp" android:background="#D3E6C8"/>
-                <View android:layout_width="0dp" android:layout_height="110dp" android:layout_weight="1" android:layout_marginStart="8dp" android:background="#C9C3E5"/>
-            </LinearLayout>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                    <View android:layout_width="0dp" android:layout_height="110dp" android:layout_weight="1" android:background="#E3CBAE"/>
+                    <View android:layout_width="0dp" android:layout_height="110dp" android:layout_weight="1" android:layout_marginStart="8dp" android:background="#D3E6C8"/>
+                    <View android:layout_width="0dp" android:layout_height="110dp" android:layout_weight="1" android:layout_marginStart="8dp" android:background="#C9C3E5"/>
+                </LinearLayout>
                 <Space android:layout_width="match_parent" android:layout_height="8dp"/>
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-                <View android:layout_width="0dp" android:layout_height="110dp" android:layout_weight="1" android:background="#D4B58D"/>
-                <View android:layout_width="0dp" android:layout_height="110dp" android:layout_weight="1" android:layout_marginStart="8dp" android:background="#BBD9E5"/>
-                <View android:layout_width="0dp" android:layout_height="110dp" android:layout_weight="1" android:layout_marginStart="8dp" android:background="#C2A27E"/>
-            </LinearLayout>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                    <View android:layout_width="0dp" android:layout_height="110dp" android:layout_weight="1" android:background="#D4B58D"/>
+                    <View android:layout_width="0dp" android:layout_height="110dp" android:layout_weight="1" android:layout_marginStart="8dp" android:background="#BBD9E5"/>
+                    <View android:layout_width="0dp" android:layout_height="110dp" android:layout_weight="1" android:layout_marginStart="8dp" android:background="#C2A27E"/>
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

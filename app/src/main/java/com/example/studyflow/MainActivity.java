@@ -1,7 +1,6 @@
 package com.example.studyflow;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -35,9 +34,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        SharedPreferences preferences = getSharedPreferences("SpotSnapAccount", MODE_PRIVATE);
-
-        if (!preferences.getBoolean("isLoggedIn", false)) {
+        // Not logged in (or logged out): go to the login screen.
+        if (!UserSession.isLoggedIn()) {
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
             startActivity(intent);
             finish();
@@ -68,6 +66,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         DrawerMenu.setup(this, drawer);
+
+        // Profile missing locally (fresh install, or it could not load at login): fetch it now.
+        if (!UserSession.hasProfile(this)) {
+            AuthRepository.loadProfile(this, () -> DrawerMenu.bindUser(drawer));
+        }
 
         findViewById(R.id.btn_profile).setOnClickListener(v -> drawer.openDrawer(GravityCompat.START));
         findViewById(R.id.search_bar).setOnClickListener(v -> DrawerMenu.open(this, new SearchFragment()));
@@ -107,6 +110,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap)
     {
+        String owner = UserSession.getUsername(this); // sample spots below belong to the logged-in user
         LatLng manila = new LatLng(14.5995, 120.9842);
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(manila, 12));
 
@@ -145,27 +149,27 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Bitmap hangoutBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.hangoutmarker);
         Bitmap smallHangoutBitmap = Bitmap.createScaledBitmap(hangoutBitmap, 100, 120, false);
 
-        Spot dlsu = new Spot("De La Salle University - Taft", "Jerimaya", "Sobrang lakas ng aircon!!", "Others", 14.5647, 120.9934, photos, 0, 0);
+        Spot dlsu = new Spot("De La Salle University - Taft", owner, "Sobrang lakas ng aircon!!", "Others", 14.5647, 120.9934, photos, 0, 0);
         Marker marker = googleMap.addMarker(new MarkerOptions().position(new LatLng(dlsu.getLatitude(), dlsu.getLongitude())).title(dlsu.getName()).icon(BitmapDescriptorFactory.fromBitmap(smallOthersBitmap)));
         marker.setTag(dlsu);
 
-        Spot cafe = new Spot("Cafe Ocampo", "Jerimaya", "A nice place to enjoy coffee and relax", "Food", 14.56482, 120.99968, cafePhotos, 0, 0);
+        Spot cafe = new Spot("Cafe Ocampo", owner, "A nice place to enjoy coffee and relax", "Food", 14.56482, 120.99968, cafePhotos, 0, 0);
         Marker cafeMarker = googleMap.addMarker(new MarkerOptions().position(new LatLng(cafe.getLatitude(), cafe.getLongitude())).title(cafe.getName()).icon(BitmapDescriptorFactory.fromBitmap(smallFoodBitmap)));
         cafeMarker.setTag(cafe);
 
-        Spot rooftop = new Spot("Rooftop Lounge Makati", "Jerimaya", "A rooftop lounge with views of the Makati skyline", "Food", 14.56469, 121.02925, rooftopPhotos, 0, 0);
+        Spot rooftop = new Spot("Rooftop Lounge Makati", owner, "A rooftop lounge with views of the Makati skyline", "Food", 14.56469, 121.02925, rooftopPhotos, 0, 0);
         Marker rooftopMarker = googleMap.addMarker(new MarkerOptions().position(new LatLng(rooftop.getLatitude(), rooftop.getLongitude())).title(rooftop.getName()).icon(BitmapDescriptorFactory.fromBitmap(smallFoodBitmap)));
         rooftopMarker.setTag(rooftop);
 
-        Spot intramuros = new Spot("Intramuros Walls", "Jerimaya", "Medjo scary yung haunted area", "Tourist Spot", 14.583333, 120.983333, intramurosPhotos, 0, 0);
+        Spot intramuros = new Spot("Intramuros Walls", owner, "Medjo scary yung haunted area", "Tourist Spot", 14.583333, 120.983333, intramurosPhotos, 0, 0);
         Marker intramurosMarker = googleMap.addMarker(new MarkerOptions().position(new LatLng(intramuros.getLatitude(), intramuros.getLongitude())).title(intramuros.getName()).icon(BitmapDescriptorFactory.fromBitmap(smallTouristBitmap)));
         intramurosMarker.setTag(intramuros);
 
-        Spot ramen = new Spot("Ramen Corner Quezon City", "Jerimaya", "A nice place to enjoy a warm bowl of ramen", "Food", 14.6565, 121.0325, ramenPhotos, 0, 0);
+        Spot ramen = new Spot("Ramen Corner Quezon City", owner, "A nice place to enjoy a warm bowl of ramen", "Food", 14.6565, 121.0325, ramenPhotos, 0, 0);
         Marker ramenMarker = googleMap.addMarker(new MarkerOptions().position(new LatLng(ramen.getLatitude(), ramen.getLongitude())).title(ramen.getName()).icon(BitmapDescriptorFactory.fromBitmap(smallFoodBitmap)));
         ramenMarker.setTag(ramen);
 
-        Spot venice = new Spot("Venice Grand Canal Mall", "Jerimaya", "A popular hangout spot for food, shopping, and taking pictures by the canal.", "Hang Out", 14.5337, 121.0565, venicePhotos, 0, 0);
+        Spot venice = new Spot("Venice Grand Canal Mall", owner, "A popular hangout spot for food, shopping, and taking pictures by the canal.", "Hang Out", 14.5337, 121.0565, venicePhotos, 0, 0);
         Marker veniceMarker = googleMap.addMarker(new MarkerOptions().position(new LatLng(venice.getLatitude(), venice.getLongitude())).title(venice.getName()).icon(BitmapDescriptorFactory.fromBitmap(smallHangoutBitmap)));
         veniceMarker.setTag(venice);
 

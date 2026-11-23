@@ -58,7 +58,7 @@ public class AddSpotFragment extends Fragment {
             String review = String.valueOf(reviewInput.getText()).trim();
             ArrayList<Photo> photos = new ArrayList<>();
             photos.add(new Photo(R.drawable.dlsu, name));
-            Spot spot = new Spot(name, "Jerimaya", review, category, 14.5995, 120.9842, photos, 0, 0);
+            Spot spot = new Spot(name, UserSession.getUsername(requireContext()), review, category, 14.5995, 120.9842, photos, 0, 0);
 
             MaterialButtonToggleGroup privacy = view.findViewById(R.id.toggle_privacy);
             boolean isPublic = privacy.getCheckedButtonId() == R.id.btn_public;
