@@ -17,6 +17,12 @@ public class Spot {
 
     private int saves;
 
+    private String id;            // Firestore document id (null until the spot is saved)
+    private String creatorId;     // Firebase uid of the user who pinned the spot
+    private boolean isPublic = true;
+    private int photoCount;       // number of pictures saved in Firestore
+    private byte[] thumbnail;     // small preview picture (for list screens)
+
     public Spot(String name, String creator, String review, String category, double latitude, double longitude, ArrayList<Photo> images, int likes, int saves)
     {
         this.name = name;
@@ -60,5 +66,45 @@ public class Spot {
 
     public int getSaves(){
         return saves;
+    }
+
+    public String getId(){
+        return id;
+    }
+
+    public void setId(String id){
+        this.id = id;
+    }
+
+    public String getCreatorId(){
+        return creatorId;
+    }
+
+    public void setCreatorId(String creatorId){
+        this.creatorId = creatorId;
+    }
+
+    public boolean isPublic(){
+        return isPublic;
+    }
+
+    public void setPublic(boolean isPublic){
+        this.isPublic = isPublic;
+    }
+
+    public int getPhotoCount(){
+        return photoCount;
+    }
+
+    public void setPhotoCount(int photoCount){
+        this.photoCount = photoCount;
+    }
+
+    public byte[] getThumbnail(){
+        return thumbnail;
+    }
+
+    public void setThumbnail(byte[] thumbnail){
+        this.thumbnail = thumbnail;
     }
 }

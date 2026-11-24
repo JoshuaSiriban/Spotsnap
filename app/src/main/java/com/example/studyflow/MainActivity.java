@@ -27,8 +27,15 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
+
+    private SpotRepository.Subscription spotSubscription; // live updates of the spots from Firestore
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,6 +115,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (spotSubscription != null) spotSubscription.remove(); // stop listening to Firestore
+    }
+
+    @Override
     public void onMapReady(GoogleMap googleMap)
     {
         String owner = UserSession.getUsername(this); // sample spots below belong to the logged-in user
@@ -175,13 +188,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         ArrayList<Spot> localSpots = new ArrayList<>(Arrays.asList(dlsu, cafe, rooftop, intramuros, ramen, venice));
         SpotRepository.seedIfEmpty(this, localSpots);
-        SpotRepository.loadSpots(this, remoteSpots -> {
+
+        // The sample spots are saved in Firestore with an id made from their name.
+        // Those ids are skipped below so the same place is not drawn twice.
+        Set<String> sampleIds = new HashSet<>();
+        for (Spot local : localSpots) {
+            sampleIds.add(local.getName().toLowerCase().replaceAll("[^a-z0-9]+", "-"));
+        }
+
+        // Spots pinned by users: every public spot plus the logged in user's private ones.
+        // The listener runs again whenever a spot is added, so a new pin shows up right away.
+        Map<String, Marker> userMarkers = new HashMap<>();
+        spotSubscription = SpotRepository.listenToSpots(this, remoteSpots -> {
+            Set<String> currentIds = new HashSet<>();
+
             for (Spot remote : remoteSpots) {
-                boolean alreadyOnMap = false;
-                for (Spot local : localSpots) {
-                    if (local.getName().equals(remote.getName())) alreadyOnMap = true;
+                if (sampleIds.contains(remote.getId())) continue;
+                currentIds.add(remote.getId());
+
+                Marker existing = userMarkers.get(remote.getId());
+                if (existing != null) {
+                    existing.setTag(remote);
+                    continue;
                 }
-                if (alreadyOnMap) continue;
 
                 Bitmap icon = smallOthersBitmap;
                 if ("Food".equals(remote.getCategory())) icon = smallFoodBitmap;
@@ -192,7 +221,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         .position(new LatLng(remote.getLatitude(), remote.getLongitude()))
                         .title(remote.getName())
                         .icon(BitmapDescriptorFactory.fromBitmap(icon)));
-                if (m != null) m.setTag(remote);
+                if (m != null) {
+                    m.setTag(remote);
+                    userMarkers.put(remote.getId(), m);
+                }
+            }
+
+            // Remove the markers of spots that were deleted or made private
+            Iterator<Map.Entry<String, Marker>> iterator = userMarkers.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<String, Marker> entry = iterator.next();
+                if (!currentIds.contains(entry.getKey())) {
+                    entry.getValue().remove();
+                    iterator.remove();
+                }
             }
         });
 

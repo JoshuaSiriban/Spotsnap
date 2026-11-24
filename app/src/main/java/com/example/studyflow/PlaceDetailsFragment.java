@@ -66,11 +66,17 @@ public class PlaceDetailsFragment extends Fragment {
 
             ((TextView) view.findViewById(R.id.savesCount)).setText(String.valueOf(spot.getSaves()));
 
-            ((TextView) view.findViewById(R.id.photosCount)).setText(String.valueOf(spot.images.size()));
+            ((TextView) view.findViewById(R.id.photosCount)).setText(String.valueOf(Math.max(spot.getPhotoCount(), spot.images.size())));
 
             ((TextView) view.findViewById(R.id.spotCreator)).setText((spot.getCreator()));
 
             ((TextView) view.findViewById(R.id.noteCreator)).setText((spot.getCreator()));
+
+            ((TextView) view.findViewById(R.id.txt_location)).setText(String.format(
+                    java.util.Locale.US, "%.4f, %.4f", spot.getLatitude(), spot.getLongitude()));
+
+            ((TextView) view.findViewById(R.id.txt_visibility)).setText(
+                    spot.isPublic() ? "Public post" : "Private post (only you can see it)");
         }
 
         view.findViewById(R.id.btn_back).setOnClickListener(v ->
@@ -78,7 +84,21 @@ public class PlaceDetailsFragment extends Fragment {
 
         RecyclerView rv = view.findViewById(R.id.rv_photos);
         rv.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
-        rv.setAdapter(new PolaroidAdapter(spot != null ? spot.images : new java.util.ArrayList<Photo>()));
+        PolaroidAdapter adapter = new PolaroidAdapter(spot != null ? spot.images : new java.util.ArrayList<Photo>());
+        rv.setAdapter(adapter);
+
+        // Spots from the database only carry a small thumbnail, so load their pictures now
+        if (spot != null && spot.images.isEmpty() && spot.getPhotoCount() > 0 && spot.getId() != null) {
+            SpotRepository.loadPhotos(spot, loaded -> {
+                spot.images = loaded;
+                adapter.setPhotos(loaded);
+
+                View root = getView();
+                if (root != null) {
+                    ((TextView) root.findViewById(R.id.photosCount)).setText(String.valueOf(loaded.size()));
+                }
+            });
+        }
 
         view.findViewById(R.id.btn_like).setOnClickListener(v -> v.setSelected(!v.isSelected()));
         view.findViewById(R.id.btn_save).setOnClickListener(v -> {

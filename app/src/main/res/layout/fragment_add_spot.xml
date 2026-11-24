@@ -14,18 +14,23 @@
             <LinearLayout android:id="@+id/photo_frame" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="14dp" android:rotation="-2" android:background="@drawable/bg_polaroid" android:clickable="true" android:focusable="true">
                 <FrameLayout android:layout_width="match_parent" android:layout_height="220dp" android:background="@drawable/bg_photo_ph">
                     <ImageView android:id="@+id/img_preview" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:importantForAccessibility="no"/>
-                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:orientation="vertical" android:gravity="center">
+                    <LinearLayout android:id="@+id/photo_placeholder" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:orientation="vertical" android:gravity="center">
                         <ImageView android:layout_width="40dp" android:layout_height="40dp" android:src="@drawable/ic_camera" app:tint="@color/muted_dark" android:importantForAccessibility="no"/>
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Tap to add your photo" android:textColor="@color/muted_dark" android:textSize="14sp"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Tap to add your photos" android:textColor="@color/muted_dark" android:textSize="14sp"/>
                     </LinearLayout>
                 </FrameLayout>
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="12dp" android:paddingBottom="8dp" android:text="Say something about this spot..." android:textColor="@color/muted_dark" android:textSize="15sp" android:textStyle="italic" android:fontFamily="serif"/>
+                <TextView android:id="@+id/txt_frame_caption" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="12dp" android:paddingBottom="8dp" android:text="Say something about this spot..." android:textColor="@color/muted_dark" android:textSize="15sp" android:textStyle="italic" android:fontFamily="serif"/>
             </LinearLayout>
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="22dp" android:orientation="horizontal">
                 <com.google.android.material.button.MaterialButton android:id="@+id/btn_camera" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:text="Camera" android:textColor="@color/ink" app:icon="@drawable/ic_camera" app:iconTint="@color/ink" app:strokeColor="@color/ink" app:cornerRadius="14dp"/>
                 <com.google.android.material.button.MaterialButton android:id="@+id/btn_gallery" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:layout_marginStart="10dp" android:text="Gallery" android:textColor="@color/ink" app:icon="@drawable/ic_album" app:iconTint="@color/ink" app:strokeColor="@color/ink" app:cornerRadius="14dp"/>
             </LinearLayout>
+
+            <TextView android:id="@+id/txt_photo_counter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="0 of 5 photos" android:textColor="@color/muted_dark" android:textSize="13sp"/>
+            <HorizontalScrollView android:id="@+id/photo_strip_scroll" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:scrollbars="none" android:visibility="gone">
+                <LinearLayout android:id="@+id/photo_strip" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal"/>
+            </HorizontalScrollView>
 
             <com.google.android.material.textfield.TextInputLayout android:id="@+id/layout_name" style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:hint="Place name" app:boxStrokeColor="@color/ink" app:hintTextColor="@color/ink" app:boxBackgroundColor="@color/paper">
                 <com.google.android.material.textfield.TextInputEditText android:id="@+id/input_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textCapWords" android:maxLines="1"/>
@@ -38,17 +43,18 @@
                 <com.google.android.material.chip.Chip android:layout_width="wrap_content" android:layout_height="wrap_content" style="@style/Widget.SpotSnap.Chip" android:text="Food" android:id="@+id/chip_food" android:checked="true"/>
                 <com.google.android.material.chip.Chip android:layout_width="wrap_content" android:layout_height="wrap_content" style="@style/Widget.SpotSnap.Chip" android:text="Hang Out" android:id="@+id/chip_hangout"/>
                 <com.google.android.material.chip.Chip android:layout_width="wrap_content" android:layout_height="wrap_content" style="@style/Widget.SpotSnap.Chip" android:text="Tourist Spot" android:id="@+id/chip_tourist"/>
-                <com.google.android.material.chip.Chip android:layout_width="wrap_content" android:layout_height="wrap_content" style="@style/Widget.SpotSnap.Chip" android:text="Other" android:id="@+id/chip_other"/>
+                <com.google.android.material.chip.Chip android:layout_width="wrap_content" android:layout_height="wrap_content" style="@style/Widget.SpotSnap.Chip" android:text="Others" android:id="@+id/chip_other"/>
             </com.google.android.material.chip.ChipGroup>
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="22dp" android:layout_marginBottom="8dp" android:text="PINNED AT" android:textColor="@color/muted_dark" android:textSize="12sp" android:textStyle="bold" android:letterSpacing="0.15"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="22dp" android:layout_marginBottom="8dp" android:text="LOCATION" android:textColor="@color/muted_dark" android:textSize="12sp" android:textStyle="bold" android:letterSpacing="0.15"/>
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:padding="16dp" android:background="@drawable/bg_card_ink">
                 <ImageView android:layout_width="28dp" android:layout_height="28dp" android:src="@drawable/ic_pin" app:tint="@color/mustard" android:importantForAccessibility="no"/>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="14dp" android:orientation="vertical">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Your current location" android:textColor="@color/cream" android:textSize="15sp" android:textStyle="bold"/>
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="14.5995° N, 120.9842° E" android:textColor="@color/muted" android:textSize="13sp"/>
+                    <TextView android:id="@+id/txt_location_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Your current location" android:textColor="@color/cream" android:textSize="15sp" android:textStyle="bold"/>
+                    <TextView android:id="@+id/txt_location_coords" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="14.5995° N, 120.9842° E" android:textColor="@color/muted" android:textSize="13sp"/>
                 </LinearLayout>
                 <com.google.android.material.button.MaterialButton android:id="@+id/btn_adjust_pin" style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="wrap_content" android:layout_height="48dp" android:text="Adjust" android:textColor="@color/mustard"/>
             </LinearLayout>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btn_use_current" style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="wrap_content" android:layout_height="48dp" android:text="Use my current location" android:textColor="@color/ink" app:icon="@drawable/ic_pin" app:iconTint="@color/ink"/>
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="22dp" android:layout_marginBottom="8dp" android:text="WHO CAN SEE IT" android:textColor="@color/muted_dark" android:textSize="12sp" android:textStyle="bold" android:letterSpacing="0.15"/>
             <com.google.android.material.button.MaterialButtonToggleGroup android:id="@+id/toggle_privacy" android:layout_width="match_parent" android:layout_height="wrap_content" app:singleSelection="true" app:selectionRequired="true" app:checkedButton="@+id/btn_public">
                 <com.google.android.material.button.MaterialButton android:id="@+id/btn_private" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:text="Private" android:textColor="@color/ink" app:strokeColor="@color/ink"/>
