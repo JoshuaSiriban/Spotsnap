@@ -63,35 +63,154 @@
                     app:tint="@color/ink" />
             </LinearLayout>
 
-            <ImageButton
-                android:id="@+id/btn_crosshair"
-                android:layout_width="61dp"
-                android:layout_height="61dp"
-                android:layout_gravity="bottom|end"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="96dp"
-                android:background="@android:color/transparent"
-                android:src="@drawable/togglecrosshair"
-                android:contentDescription="Toggle crosshair"
-                android:elevation="6dp"
-                android:padding="0dp"
-                android:scaleType="fitCenter"
-                app:tint="@null" />
+            <!-- Nearby spots: slides up from the bottom like Google Maps. Hidden until "my location" is used. -->
+            <androidx.coordinatorlayout.widget.CoordinatorLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
 
-            <ImageButton
-                android:id="@+id/btn_add"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
+                <LinearLayout
+                    android:id="@+id/nearby_sheet"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_bottom_sheet"
+                    android:clickable="true"
+                    android:elevation="12dp"
+                    android:focusable="true"
+                    android:orientation="vertical"
+                    app:behavior_expandedOffset="130dp"
+                    app:behavior_fitToContents="false"
+                    app:behavior_halfExpandedRatio="0.5"
+                    app:behavior_hideable="true"
+                    app:behavior_peekHeight="170dp"
+                    app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+                    <View
+                        android:layout_width="36dp"
+                        android:layout_height="4dp"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_sheet_handle" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="20dp"
+                        android:paddingTop="6dp"
+                        android:paddingEnd="8dp"
+                        android:paddingBottom="6dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/nearby_title"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="serif"
+                                android:text="Nearby spots"
+                                android:textColor="@color/ink"
+                                android:textSize="20sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/nearby_subtitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/muted_dark"
+                                android:textSize="13sp" />
+                        </LinearLayout>
+
+                        <ImageButton
+                            android:id="@+id/btn_close_nearby"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="Hide nearby spots"
+                            android:padding="10dp"
+                            android:scaleType="centerInside"
+                            android:src="@drawable/ic_close"
+                            app:tint="@color/ink" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/line" />
+
+                    <TextView
+                        android:id="@+id/nearby_empty"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="20dp"
+                        android:text="No spots nearby yet. Tap + to pin the first one!"
+                        android:textColor="@color/muted_dark"
+                        android:textSize="15sp"
+                        android:visibility="gone" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/nearby_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:clipToPadding="false"
+                        android:paddingBottom="24dp" />
+                </LinearLayout>
+            </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+            <!-- Map buttons. They ride up with the sheet and fade out when it is opened wide. -->
+            <LinearLayout
+                android:id="@+id/map_buttons"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_gravity="bottom|end"
                 android:layout_marginEnd="16dp"
                 android:layout_marginBottom="24dp"
-                android:background="@drawable/bg_badge"
-                android:contentDescription="Add a spot"
-                android:elevation="6dp"
-                android:padding="16dp"
-                android:scaleType="centerInside"
-                android:src="@drawable/ic_add"
-                app:tint="@color/ink" />
+                android:gravity="end"
+                android:orientation="vertical">
+
+                <ImageButton
+                    android:id="@+id/btn_my_location"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:background="@drawable/bg_badge"
+                    android:contentDescription="Show my location and nearby spots"
+                    android:elevation="6dp"
+                    android:padding="14dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_my_location"
+                    app:tint="@color/ink" />
+
+                <ImageButton
+                    android:id="@+id/btn_crosshair"
+                    android:layout_width="61dp"
+                    android:layout_height="61dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Toggle crosshair"
+                    android:elevation="6dp"
+                    android:padding="0dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/togglecrosshair"
+                    app:tint="@null" />
+
+                <ImageButton
+                    android:id="@+id/btn_add"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_badge"
+                    android:contentDescription="Add a spot"
+                    android:elevation="6dp"
+                    android:padding="16dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_add"
+                    app:tint="@color/ink" />
+            </LinearLayout>
 
             <HorizontalScrollView
                 android:layout_width="match_parent"

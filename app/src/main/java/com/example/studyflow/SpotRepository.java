@@ -3,6 +3,8 @@ package com.example.studyflow;
 import android.content.Context;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.google.firebase.firestore.Blob;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -42,6 +44,11 @@ public class SpotRepository {
 
     public interface OnPhotosLoaded {
         void onLoaded(ArrayList<Photo> photos);
+    }
+
+    /** Called when Firestore could not be read (no internet, missing permission, ...). */
+    public interface OnError {
+        void onError(String message);
     }
 
     public interface OnSaved {
@@ -111,17 +118,6 @@ public class SpotRepository {
                 });
     }
 
-    public static void seedIfEmpty(Context context, List<Spot> spots) {
-        db().collection(SPOTS).limit(1).get().addOnSuccessListener(snapshot -> {
-            if (!snapshot.isEmpty()) return;
-            for (Spot spot : spots) {
-                String id = spot.getName().toLowerCase().replaceAll("[^a-z0-9]+", "-");
-                db().collection(SPOTS).document(id).set(toMap(context, spot, true));
-            }
-            Log.d(TAG, "Seeded " + spots.size() + " sample spots");
-        }).addOnFailureListener(e -> Log.e(TAG, "Seed failed", e));
-    }
-
     public static void loadSpots(Context context, OnSpotsLoaded callback) {
         db().collection(SPOTS).whereEqualTo("isPublic", true).get()
                 .addOnSuccessListener(snapshot -> {
@@ -141,6 +137,11 @@ public class SpotRepository {
      * user pins a new spot.
      */
     public static Subscription listenToSpots(Context context, OnSpotsChanged callback) {
+        return listenToSpots(context, callback, null);
+    }
+
+    public static Subscription listenToSpots(Context context, OnSpotsChanged callback,
+                                             @Nullable OnError onError) {
         Context app = context.getApplicationContext();
         Subscription subscription = new Subscription();
         Map<String, Spot> publicSpots = new LinkedHashMap<>();
@@ -157,6 +158,7 @@ public class SpotRepository {
                 .addSnapshotListener((snapshot, error) -> {
                     if (error != null || snapshot == null) {
                         Log.e(TAG, "Could not load public spots", error);
+                        if (onError != null) onError.onError("Could not load spots.");
                         return;
                     }
                     publicSpots.clear();
@@ -173,6 +175,7 @@ public class SpotRepository {
                     .addSnapshotListener((snapshot, error) -> {
                         if (error != null || snapshot == null) {
                             Log.e(TAG, "Could not load my spots", error);
+                            if (onError != null) onError.onError("Could not load your spots.");
                             return;
                         }
                         mySpots.clear();
@@ -188,6 +191,10 @@ public class SpotRepository {
 
     /** Loads the pictures of a spot (they are not part of the spot document). */
     public static void loadPhotos(Spot spot, OnPhotosLoaded callback) {
+        loadPhotos(spot, callback, null);
+    }
+
+    public static void loadPhotos(Spot spot, OnPhotosLoaded callback, @Nullable OnError onError) {
         db().collection(SPOTS).document(spot.getId()).collection(PHOTOS)
                 .orderBy("order")
                 .get()
@@ -201,37 +208,13 @@ public class SpotRepository {
                     }
                     callback.onLoaded(photos);
                 })
-                .addOnFailureListener(e -> Log.e(TAG, "Could not load photos", e));
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Could not load photos", e);
+                    if (onError != null) onError.onError("Could not load the photos.");
+                });
     }
 
     // ------------------------------------------------------------ converting
-
-    /** Used for the sample spots: their pictures are saved by drawable name. */
-    private static Map<String, Object> toMap(Context context, Spot spot, boolean isPublic) {
-        Map<String, Object> data = new HashMap<>();
-        data.put("name", spot.getName());
-        data.put("creator", spot.getCreator());
-        data.put("review", spot.getReview());
-        data.put("category", spot.getCategory());
-        data.put("latitude", spot.getLatitude());
-        data.put("longitude", spot.getLongitude());
-        data.put("likes", spot.getLikes());
-        data.put("saves", spot.getSaves());
-        data.put("isPublic", isPublic);
-        data.put("createdAt", FieldValue.serverTimestamp());
-
-        List<Map<String, Object>> photos = new ArrayList<>();
-        if (spot.images != null) {
-            for (Photo p : spot.images) {
-                Map<String, Object> photo = new HashMap<>();
-                photo.put("image", context.getResources().getResourceEntryName(p.image));
-                photo.put("caption", p.caption);
-                photos.add(photo);
-            }
-        }
-        data.put("photos", photos);
-        return data;
-    }
 
     @SuppressWarnings("unchecked")
     private static Spot toSpot(Context context, DocumentSnapshot doc) {
@@ -243,7 +226,8 @@ public class SpotRepository {
         Long likes = doc.getLong("likes");
         Long saves = doc.getLong("saves");
 
-        // Sample spots keep their pictures as a list of drawable names
+        // Old spots that were seeded by earlier versions of the app keep their pictures as a
+        // list of drawable names. They are still read here so they keep showing up.
         ArrayList<Photo> photos = new ArrayList<>();
         List<Map<String, Object>> stored = (List<Map<String, Object>>) doc.get("photos");
         if (stored != null) {

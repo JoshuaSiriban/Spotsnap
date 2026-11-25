@@ -40,6 +40,12 @@ public class PlaceDetailsFragment extends Fragment {
         return f;
     }
 
+    /** Shows a message over the photo strip, or hides it when {@code message} is null. */
+    private void showStatus(TextView status, @Nullable String message) {
+        status.setText(message);
+        status.setVisibility(message == null ? View.GONE : View.VISIBLE);
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -68,9 +74,9 @@ public class PlaceDetailsFragment extends Fragment {
 
             ((TextView) view.findViewById(R.id.photosCount)).setText(String.valueOf(Math.max(spot.getPhotoCount(), spot.images.size())));
 
-            ((TextView) view.findViewById(R.id.spotCreator)).setText((spot.getCreator()));
+            ((TextView) view.findViewById(R.id.spotCreator)).setText("Pinned by @" + spot.getCreator());
 
-            ((TextView) view.findViewById(R.id.noteCreator)).setText((spot.getCreator()));
+            ((TextView) view.findViewById(R.id.noteCreator)).setText("— @" + spot.getCreator());
 
             ((TextView) view.findViewById(R.id.txt_location)).setText(String.format(
                     java.util.Locale.US, "%.4f, %.4f", spot.getLatitude(), spot.getLongitude()));
@@ -88,16 +94,26 @@ public class PlaceDetailsFragment extends Fragment {
         rv.setAdapter(adapter);
 
         // Spots from the database only carry a small thumbnail, so load their pictures now
+        TextView status = view.findViewById(R.id.txt_photos_status);
         if (spot != null && spot.images.isEmpty() && spot.getPhotoCount() > 0 && spot.getId() != null) {
+            showStatus(status, "Loading photos...");
             SpotRepository.loadPhotos(spot, loaded -> {
                 spot.images = loaded;
                 adapter.setPhotos(loaded);
 
                 View root = getView();
-                if (root != null) {
-                    ((TextView) root.findViewById(R.id.photosCount)).setText(String.valueOf(loaded.size()));
-                }
+                if (root == null) return; // the screen was closed while loading
+                ((TextView) root.findViewById(R.id.photosCount)).setText(String.valueOf(loaded.size()));
+                showStatus(root.findViewById(R.id.txt_photos_status),
+                        loaded.isEmpty() ? "No photos for this spot yet" : null);
+            }, message -> {
+                View root = getView();
+                if (root == null) return;
+                showStatus(root.findViewById(R.id.txt_photos_status),
+                        message + " Check your internet connection and try again.");
             });
+        } else if (adapter.getItemCount() == 0) {
+            showStatus(status, "No photos for this spot yet");
         }
 
         view.findViewById(R.id.btn_like).setOnClickListener(v -> v.setSelected(!v.isSelected()));

@@ -16,7 +16,10 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_photos" android:layout_width="match_parent" android:layout_height="290dp" android:layout_marginTop="14dp" android:clipToPadding="false" android:paddingStart="16dp" android:paddingEnd="16dp"/>
+            <FrameLayout android:layout_width="match_parent" android:layout_height="290dp" android:layout_marginTop="14dp">
+                <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_photos" android:layout_width="match_parent" android:layout_height="match_parent" android:clipToPadding="false" android:paddingStart="16dp" android:paddingEnd="16dp"/>
+                <TextView android:id="@+id/txt_photos_status" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:gravity="center" android:paddingStart="32dp" android:paddingEnd="32dp" android:textColor="@color/muted_dark" android:textSize="15sp" android:textStyle="italic" android:fontFamily="serif" android:visibility="gone"/>
+            </FrameLayout>
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="24dp" android:layout_marginEnd="24dp" android:layout_marginTop="8dp" android:background="@drawable/bg_stats">
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"  android:layout_weight="1" android:orientation="vertical" android:gravity="center" android:paddingTop="14dp" android:paddingBottom="14dp"><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/likesCount" android:text="12" android:textColor="@color/ink" android:textSize="24sp" android:textStyle="bold" android:fontFamily="serif"/><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/likes" android:text="Likes" android:textColor="@color/muted_dark" android:textSize="12sp"/></LinearLayout>
