@@ -58,7 +58,7 @@ import java.util.Set;
 
 /**
  * The map screen. Every public spot (plus the logged in user's private ones) comes live from
- * Firestore and is drawn as a marker. The Food / Hang Out / Tourist Spot chips filter the
+ * Firestore and is drawn as a marker. The six category chips filter the
  * markers, and the "my location" button centres the map on the user and lists nearby spots.
  */
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
@@ -362,17 +362,35 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         refreshNearby();
     }
 
-    private BitmapDescriptor iconFor(String category) {
-        int resId = R.drawable.othersmarker;
-        if ("Food".equalsIgnoreCase(category)) resId = R.drawable.foodmarker;
-        else if ("Tourist Spot".equalsIgnoreCase(category)) resId = R.drawable.touristmarker;
-        else if ("Hang Out".equalsIgnoreCase(category)) resId = R.drawable.hangoutmarker;
+    /** Restaurants, Tourist Attractions and Hangouts have their own marker picture; Caf\u00E9s and
+     *  Parks reuse one and are tinted (brown / green); Other uses the plain marker. */
+    private BitmapDescriptor iconFor(String rawCategory) {
+        String category = Categories.normalize(rawCategory);
+        int resId;
+        switch (category) {
+            case Categories.RESTAURANTS: case Categories.CAFES: resId = R.drawable.foodmarker; break;
+            case Categories.TOURIST: resId = R.drawable.touristmarker; break;
+            case Categories.HANGOUTS: resId = R.drawable.hangoutmarker; break;
+            default: resId = R.drawable.othersmarker;
+        }
+        int tint = Categories.tintFor(category);
+        int key = resId * 31 + tint;
 
-        BitmapDescriptor icon = icons.get(resId);
+        BitmapDescriptor icon = icons.get(key);
         if (icon == null) {
             Bitmap original = BitmapFactory.decodeResource(getResources(), resId);
-            icon = BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(original, 100, 120, false));
-            icons.put(resId, icon);
+            Bitmap scaled = Bitmap.createScaledBitmap(original, 100, 120, false);
+            if (tint != 0) {
+                Bitmap tinted = scaled.copy(Bitmap.Config.ARGB_8888, true);
+                android.graphics.Canvas canvas = new android.graphics.Canvas(tinted);
+                android.graphics.Paint paint = new android.graphics.Paint();
+                paint.setColorFilter(new android.graphics.PorterDuffColorFilter(
+                        tint, android.graphics.PorterDuff.Mode.MULTIPLY));
+                canvas.drawBitmap(scaled, 0, 0, paint);
+                scaled = tinted;
+            }
+            icon = BitmapDescriptorFactory.fromBitmap(scaled);
+            icons.put(key, icon);
         }
         return icon;
     }

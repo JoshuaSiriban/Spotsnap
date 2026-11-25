@@ -43,6 +43,12 @@
                 </LinearLayout>
                 <com.google.android.material.button.MaterialButton android:id="@+id/btn_follow" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="wrap_content" android:layout_height="48dp" android:text="Follow" android:textColor="@color/ink" app:strokeColor="@color/ink" app:cornerRadius="14dp"/>
             </LinearLayout>
+
+            <!-- Only shown to the person who pinned this spot -->
+            <LinearLayout android:id="@+id/owner_actions" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:paddingStart="24dp" android:paddingEnd="24dp" android:orientation="horizontal" android:visibility="gone">
+                <com.google.android.material.button.MaterialButton android:id="@+id/btn_edit" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:text="Edit post" android:textColor="@color/ink" app:strokeColor="@color/ink" app:cornerRadius="14dp"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/btn_delete" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:layout_marginStart="10dp" android:text="Delete" android:textColor="@color/coral" app:strokeColor="@color/coral" app:cornerRadius="14dp"/>
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 

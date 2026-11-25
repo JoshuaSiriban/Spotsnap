@@ -36,6 +36,23 @@ public class Spot {
         this.saves = saves;
     }
 
+    public void setName(String name){
+        this.name = name;
+    }
+
+    public void setReview(String review){
+        this.review = review;
+    }
+
+    public void setCategory(String category){
+        this.category = category;
+    }
+
+    public void setLocation(double latitude, double longitude){
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
+
     public double getLatitude(){
         return latitude;
     }

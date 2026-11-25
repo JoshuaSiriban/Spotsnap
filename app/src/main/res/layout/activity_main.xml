@@ -230,22 +230,33 @@
                     app:singleLine="true">
 
                     <com.google.android.material.chip.Chip
-                        android:id="@+id/filter_food"
+                        android:id="@+id/filter_restaurants"
                         style="@style/Widget.MaterialComponents.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Food"
+                        android:text="Restaurants"
                         android:textColor="@color/ink"
                         app:chipBackgroundColor="@color/chip_bg"
                         app:chipStrokeColor="@color/line"
                         app:chipStrokeWidth="1dp" />
 
                     <com.google.android.material.chip.Chip
-                        android:id="@+id/filter_hangout"
+                        android:id="@+id/filter_cafes"
                         style="@style/Widget.MaterialComponents.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Hang Out"
+                        android:text="Cafés"
+                        android:textColor="@color/ink"
+                        app:chipBackgroundColor="@color/chip_bg"
+                        app:chipStrokeColor="@color/line"
+                        app:chipStrokeWidth="1dp" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/filter_parks"
+                        style="@style/Widget.MaterialComponents.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Parks"
                         android:textColor="@color/ink"
                         app:chipBackgroundColor="@color/chip_bg"
                         app:chipStrokeColor="@color/line"
@@ -256,7 +267,29 @@
                         style="@style/Widget.MaterialComponents.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Tourist Spot"
+                        android:text="Tourist Attractions"
+                        android:textColor="@color/ink"
+                        app:chipBackgroundColor="@color/chip_bg"
+                        app:chipStrokeColor="@color/line"
+                        app:chipStrokeWidth="1dp" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/filter_hangouts"
+                        style="@style/Widget.MaterialComponents.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Hangouts"
+                        android:textColor="@color/ink"
+                        app:chipBackgroundColor="@color/chip_bg"
+                        app:chipStrokeColor="@color/line"
+                        app:chipStrokeWidth="1dp" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/filter_other"
+                        style="@style/Widget.MaterialComponents.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Other"
                         android:textColor="@color/ink"
                         app:chipBackgroundColor="@color/chip_bg"
                         app:chipStrokeColor="@color/line"

@@ -14,6 +14,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import androidx.fragment.app.FragmentManager;
 
 public class PlaceDetailsFragment extends Fragment {
 
@@ -63,7 +65,7 @@ public class PlaceDetailsFragment extends Fragment {
                     .setText(spot.getName());
 
             ((TextView) view.findViewById(R.id.txt_category))
-                    .setText(spot.getCategory().toUpperCase());
+                    .setText(Categories.normalize(spot.getCategory()).toUpperCase());
 
             ((TextView) view.findViewById(R.id.txt_review))
                     .setText(spot.getReview());
@@ -87,6 +89,16 @@ public class PlaceDetailsFragment extends Fragment {
 
         view.findViewById(R.id.btn_back).setOnClickListener(v ->
                 requireActivity().getOnBackPressedDispatcher().onBackPressed());
+
+        // Edit and delete: only for the owner of the post
+        View ownerActions = view.findViewById(R.id.owner_actions);
+        if (SpotRepository.isOwner(spot)) {
+            ownerActions.setVisibility(View.VISIBLE);
+            view.findViewById(R.id.btn_edit).setOnClickListener(v -> startEditing());
+            view.findViewById(R.id.btn_delete).setOnClickListener(v -> confirmDelete());
+        } else {
+            ownerActions.setVisibility(View.GONE);
+        }
 
         RecyclerView rv = view.findViewById(R.id.rv_photos);
         rv.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
@@ -129,5 +141,40 @@ public class PlaceDetailsFragment extends Fragment {
 
         view.findViewById(R.id.btn_go).setOnClickListener(v ->
                 Toast.makeText(requireContext(), "Directions (UI only)", Toast.LENGTH_SHORT).show());
+    }
+
+    private void startEditing() {
+        AddSpotFragment edit = new AddSpotFragment();
+        edit.setEditingSpot(spot);
+        DrawerMenu.open(requireActivity(), edit);
+    }
+
+    private void confirmDelete() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Delete this post?")
+                .setMessage("\"" + spot.getName() + "\" and its photos will be removed for good.")
+                .setPositiveButton("Delete", (dialog, which) -> deleteSpot())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deleteSpot() {
+        android.content.Context appContext = requireContext().getApplicationContext();
+        androidx.fragment.app.FragmentActivity activity = requireActivity();
+        SpotRepository.deleteSpot(spot, new SpotRepository.OnDone() {
+            @Override
+            public void onDone() {
+                Toast.makeText(appContext, "Post deleted", Toast.LENGTH_SHORT).show();
+                FragmentManager fm = activity.getSupportFragmentManager();
+                if (!fm.isStateSaved()) {
+                    fm.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                }
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(appContext, message, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 }

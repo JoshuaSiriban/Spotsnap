@@ -4,7 +4,7 @@
 
     <LinearLayout android:layout_width="match_parent" android:layout_height="64dp" android:gravity="center_vertical" android:paddingStart="8dp">
         <ImageButton android:id="@+id/btn_back" android:layout_width="48dp" android:layout_height="48dp" android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="Back" android:src="@drawable/ic_back" app:tint="@color/ink"/>
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="New Snap" android:textColor="@color/ink" android:textSize="26sp" android:textStyle="bold" android:fontFamily="serif"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:id="@+id/txt_title" android:text="New Snap" android:textColor="@color/ink" android:textSize="26sp" android:textStyle="bold" android:fontFamily="serif"/>
     </LinearLayout>
 
     <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:fillViewport="true">
@@ -40,10 +40,12 @@
             </com.google.android.material.textfield.TextInputLayout>
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="22dp" android:layout_marginBottom="8dp" android:text="CATEGORY" android:textColor="@color/muted_dark" android:textSize="12sp" android:textStyle="bold" android:letterSpacing="0.15"/>
             <com.google.android.material.chip.ChipGroup android:id="@+id/chip_group" android:layout_width="match_parent" android:layout_height="wrap_content" app:singleSelection="true" app:selectionRequired="true">
-                <com.google.android.material.chip.Chip android:layout_width="wrap_content" android:layout_height="wrap_content" style="@style/Widget.SpotSnap.Chip" android:text="Food" android:id="@+id/chip_food" android:checked="true"/>
-                <com.google.android.material.chip.Chip android:layout_width="wrap_content" android:layout_height="wrap_content" style="@style/Widget.SpotSnap.Chip" android:text="Hang Out" android:id="@+id/chip_hangout"/>
-                <com.google.android.material.chip.Chip android:layout_width="wrap_content" android:layout_height="wrap_content" style="@style/Widget.SpotSnap.Chip" android:text="Tourist Spot" android:id="@+id/chip_tourist"/>
-                <com.google.android.material.chip.Chip android:layout_width="wrap_content" android:layout_height="wrap_content" style="@style/Widget.SpotSnap.Chip" android:text="Others" android:id="@+id/chip_other"/>
+                <com.google.android.material.chip.Chip android:layout_width="wrap_content" android:layout_height="wrap_content" style="@style/Widget.SpotSnap.Chip" android:text="Restaurants" android:id="@+id/chip_restaurants" android:checked="true"/>
+                <com.google.android.material.chip.Chip android:layout_width="wrap_content" android:layout_height="wrap_content" style="@style/Widget.SpotSnap.Chip" android:text="Cafés" android:id="@+id/chip_cafes"/>
+                <com.google.android.material.chip.Chip android:layout_width="wrap_content" android:layout_height="wrap_content" style="@style/Widget.SpotSnap.Chip" android:text="Parks" android:id="@+id/chip_parks"/>
+                <com.google.android.material.chip.Chip android:layout_width="wrap_content" android:layout_height="wrap_content" style="@style/Widget.SpotSnap.Chip" android:text="Tourist Attractions" android:id="@+id/chip_tourist"/>
+                <com.google.android.material.chip.Chip android:layout_width="wrap_content" android:layout_height="wrap_content" style="@style/Widget.SpotSnap.Chip" android:text="Hangouts" android:id="@+id/chip_hangouts"/>
+                <com.google.android.material.chip.Chip android:layout_width="wrap_content" android:layout_height="wrap_content" style="@style/Widget.SpotSnap.Chip" android:text="Other" android:id="@+id/chip_other"/>
             </com.google.android.material.chip.ChipGroup>
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="22dp" android:layout_marginBottom="8dp" android:text="LOCATION" android:textColor="@color/muted_dark" android:textSize="12sp" android:textStyle="bold" android:letterSpacing="0.15"/>
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:padding="16dp" android:background="@drawable/bg_card_ink">

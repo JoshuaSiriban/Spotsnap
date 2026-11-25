@@ -11,6 +11,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.WriteBatch;
 
 import java.util.ArrayList;
@@ -214,6 +215,98 @@ public class SpotRepository {
                 });
     }
 
+    // ------------------------------------------------------- edit and delete
+
+    /** Called when an edit or a delete finished. */
+    public interface OnDone {
+        void onDone();
+
+        void onError(String message);
+    }
+
+    /** True when the logged in user pinned this spot (only they may edit or delete it). */
+    public static boolean isOwner(Spot spot) {
+        return spot != null && UserSession.isLoggedIn() && spot.getId() != null
+                && UserSession.getUid().equals(spot.getCreatorId());
+    }
+
+    /**
+     * Saves the changes of an edited spot. The pictures are replaced by the given list: the old
+     * picture documents are deleted and the new list is written, all in one batch.
+     * Only the owner may do this (also enforced by the Firestore rules, see firestore.rules).
+     */
+    public static void updateSpot(Spot spot, ArrayList<Photo> photos, OnDone callback) {
+        if (!isOwner(spot)) {
+            callback.onError("You can only edit your own posts.");
+            return;
+        }
+        DocumentReference spotRef = db().collection(SPOTS).document(spot.getId());
+        spotRef.collection(PHOTOS).get().addOnSuccessListener(old -> {
+            WriteBatch batch = db().batch();
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("name", spot.getName());
+            data.put("review", spot.getReview());
+            data.put("category", spot.getCategory());
+            data.put("latitude", spot.getLatitude());
+            data.put("longitude", spot.getLongitude());
+            data.put("isPublic", spot.isPublic());
+            data.put("photoCount", photos.size());
+            if (!photos.isEmpty() && photos.get(0).thumb != null) {
+                data.put("thumbnail", Blob.fromBytes(photos.get(0).thumb));
+            } else if (photos.isEmpty()) {
+                data.put("thumbnail", FieldValue.delete());
+            }
+            data.put("updatedAt", FieldValue.serverTimestamp());
+            batch.update(spotRef, data);
+
+            for (DocumentSnapshot doc : old.getDocuments()) batch.delete(doc.getReference());
+            for (int i = 0; i < photos.size(); i++) {
+                Photo photo = photos.get(i);
+                if (photo.bytes == null) continue;
+                Map<String, Object> photoData = new HashMap<>();
+                photoData.put("data", Blob.fromBytes(photo.bytes));
+                photoData.put("caption", photo.caption == null ? "" : photo.caption);
+                photoData.put("order", i);
+                photoData.put("createdAt", FieldValue.serverTimestamp());
+                batch.set(spotRef.collection(PHOTOS).document(), photoData);
+            }
+
+            batch.commit()
+                    .addOnSuccessListener(unused -> callback.onDone())
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Could not update the spot", e);
+                        callback.onError("Could not save your changes. " + e.getLocalizedMessage());
+                    });
+        }).addOnFailureListener(e -> {
+            Log.e(TAG, "Could not read the old photos", e);
+            callback.onError("Could not save your changes. " + e.getLocalizedMessage());
+        });
+    }
+
+    /** Deletes a spot and all of its pictures. Only the owner may do this. */
+    public static void deleteSpot(Spot spot, OnDone callback) {
+        if (!isOwner(spot)) {
+            callback.onError("You can only delete your own posts.");
+            return;
+        }
+        DocumentReference spotRef = db().collection(SPOTS).document(spot.getId());
+        spotRef.collection(PHOTOS).get().addOnSuccessListener((QuerySnapshot photos) -> {
+            WriteBatch batch = db().batch();
+            for (DocumentSnapshot doc : photos.getDocuments()) batch.delete(doc.getReference());
+            batch.delete(spotRef);
+            batch.commit()
+                    .addOnSuccessListener(unused -> callback.onDone())
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Could not delete the spot", e);
+                        callback.onError("Could not delete the post. " + e.getLocalizedMessage());
+                    });
+        }).addOnFailureListener(e -> {
+            Log.e(TAG, "Could not read the photos to delete", e);
+            callback.onError("Could not delete the post. " + e.getLocalizedMessage());
+        });
+    }
+
     // ------------------------------------------------------------ converting
 
     @SuppressWarnings("unchecked")
@@ -245,7 +338,7 @@ public class SpotRepository {
                 name,
                 doc.getString("creator") == null ? "Unknown" : doc.getString("creator"),
                 doc.getString("review") == null ? "" : doc.getString("review"),
-                doc.getString("category") == null ? "Others" : doc.getString("category"),
+                Categories.normalize(doc.getString("category")),
                 lat, lng, photos,
                 likes == null ? 0 : likes.intValue(),
                 saves == null ? 0 : saves.intValue());

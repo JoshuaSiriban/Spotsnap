@@ -70,6 +70,8 @@ public class AddSpotFragment extends Fragment {
     private boolean usingCurrentLocation = false;
     private boolean saving = false;
 
+    private Spot editingSpot;   // not null when this screen edits an existing post
+
     private Uri cameraUri;
     private File cameraFile;
 
@@ -112,6 +114,15 @@ public class AddSpotFragment extends Fragment {
     public AddSpotFragment() {
     }
 
+    /** Turns this screen into "edit this post". Call before the fragment is shown. */
+    public void setEditingSpot(Spot spot) {
+        this.editingSpot = spot;
+        this.latitude = spot.getLatitude();
+        this.longitude = spot.getLongitude();
+        this.locationReady = true;
+        this.usingCurrentLocation = false;
+    }
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -150,11 +161,54 @@ public class AddSpotFragment extends Fragment {
 
         view.findViewById(R.id.btn_pin_it).setOnClickListener(v -> savePin());
 
+        if (editingSpot != null) prefillForEditing(view);
+
         renderPhotos();
         updateLocationUi();
         setSaving(saving);
 
         if (!locationReady) fetchCurrentLocation();
+    }
+
+    /** Fills the form with the post being edited and loads its pictures. */
+    private void prefillForEditing(View root) {
+        ((TextView) root.findViewById(R.id.txt_title)).setText("Edit Snap");
+        ((TextInputEditText) root.findViewById(R.id.input_name)).setText(editingSpot.getName());
+        ((TextInputEditText) root.findViewById(R.id.input_review)).setText(editingSpot.getReview());
+
+        ChipGroup chips = root.findViewById(R.id.chip_group);
+        String category = Categories.normalize(editingSpot.getCategory());
+        for (int i = 0; i < chips.getChildCount(); i++) {
+            Chip chip = (Chip) chips.getChildAt(i);
+            if (chip.getText().toString().equals(category)) chip.setChecked(true);
+        }
+
+        MaterialButtonToggleGroup privacy = root.findViewById(R.id.toggle_privacy);
+        privacy.check(editingSpot.isPublic() ? R.id.btn_public : R.id.btn_private);
+
+        // Load the existing pictures once (not again after rotating the screen)
+        if (photos.isEmpty() && photosBeingPrepared == 0 && editingSpot.getId() != null) {
+            photosBeingPrepared++;
+            SpotRepository.loadPhotos(editingSpot, loaded -> {
+                worker.execute(() -> {
+                    ArrayList<Photo> ready = new ArrayList<>();
+                    for (Photo p : loaded) {
+                        if (p.bytes == null) continue;
+                        ready.add(new Photo(p.bytes, ImageUtils.makeThumbnail(p.bytes, THUMB_SIDE), p.caption));
+                    }
+                    mainHandler.post(() -> {
+                        photosBeingPrepared--;
+                        photos.addAll(ready);
+                        renderPhotos();
+                    });
+                });
+            }, message -> {
+                photosBeingPrepared--;
+                toast(message + " Go back and try again.");
+                renderPhotos();
+            });
+        }
+        ((MaterialButton) root.findViewById(R.id.btn_pin_it)).setText("Save changes");
     }
 
     @Override
@@ -394,10 +448,14 @@ public class AddSpotFragment extends Fragment {
         }
 
         Chip chip = root.findViewById(chips.getCheckedChipId());
-        String category = chip == null ? "Others" : chip.getText().toString();
+        String category = chip == null ? Categories.OTHER : chip.getText().toString();
         boolean isPublic = privacy.getCheckedButtonId() == R.id.btn_public;
 
         ArrayList<Photo> photosToSave = new ArrayList<>(photos);
+        if (editingSpot != null) {
+            saveEdit(name, review, category, isPublic, photosToSave);
+            return;
+        }
         Spot spot = new Spot(name, UserSession.getUsername(requireContext()), review, category,
                 latitude, longitude, photosToSave, 0, 0);
         spot.setCreatorId(UserSession.getUid());
@@ -441,6 +499,52 @@ public class AddSpotFragment extends Fragment {
         });
     }
 
+    /** Saves the changes of an existing post, then shows the updated post. */
+    private void saveEdit(String name, String review, String category, boolean isPublic,
+                          ArrayList<Photo> photosToSave) {
+        Spot updated = new Spot(name, editingSpot.getCreator(), review, category,
+                latitude, longitude, photosToSave, editingSpot.getLikes(), editingSpot.getSaves());
+        updated.setId(editingSpot.getId());
+        updated.setCreatorId(editingSpot.getCreatorId());
+        updated.setPublic(isPublic);
+        updated.setPhotoCount(photosToSave.size());
+        updated.setThumbnail(photosToSave.get(0).thumb);
+
+        setSaving(true);
+        FragmentActivity activity = requireActivity();
+        Context appContext = requireContext().getApplicationContext();
+        boolean[] finished = {false};
+
+        saveTimeout = () -> {
+            if (finished[0]) return;
+            finished[0] = true;
+            Toast.makeText(appContext, "You seem to be offline. Your changes will upload when you reconnect.",
+                    Toast.LENGTH_LONG).show();
+            backToMap(activity, null);
+        };
+        mainHandler.postDelayed(saveTimeout, SAVE_TIMEOUT_MS);
+
+        SpotRepository.updateSpot(updated, photosToSave, new SpotRepository.OnDone() {
+            @Override
+            public void onDone() {
+                if (finished[0]) return;
+                finished[0] = true;
+                mainHandler.removeCallbacks(saveTimeout);
+                Toast.makeText(appContext, "Post updated", Toast.LENGTH_SHORT).show();
+                backToMap(activity, updated);
+            }
+
+            @Override
+            public void onError(String message) {
+                if (finished[0]) return;
+                finished[0] = true;
+                mainHandler.removeCallbacks(saveTimeout);
+                Toast.makeText(appContext, message, Toast.LENGTH_LONG).show();
+                setSaving(false);
+            }
+        });
+    }
+
     private static void backToMap(FragmentActivity activity, @Nullable Spot spot) {
         FragmentManager fm = activity.getSupportFragmentManager();
         if (fm.isStateSaved()) return;
@@ -460,7 +564,7 @@ public class AddSpotFragment extends Fragment {
         if (root == null) return;
         MaterialButton button = root.findViewById(R.id.btn_pin_it);
         button.setEnabled(!value);
-        button.setText(value ? "Saving..." : "Pin it");
+        button.setText(value ? "Saving..." : (editingSpot != null ? "Save changes" : "Pin it"));
     }
 
     private void toast(String message) {
