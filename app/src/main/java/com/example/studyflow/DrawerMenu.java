@@ -26,18 +26,23 @@ public class DrawerMenu {
     }
 
     public static void setup(AppCompatActivity activity, DrawerLayout drawer) {
-        bind(activity, drawer, R.id.drawer_saved, new SavedLocationsFragment());
-        bind(activity, drawer, R.id.drawer_album, new AlbumFragment());
-        bind(activity, drawer, R.id.drawer_search, new SearchFragment());
-        bind(activity, drawer, R.id.drawer_profile, new ProfileFragment());
-        bind(activity, drawer, R.id.drawer_settings, new SettingsFragment());
+        bind(activity, drawer, R.id.drawer_saved, SavedLocationsFragment::new);
+        bind(activity, drawer, R.id.drawer_album, AlbumFragment::new);
+        bind(activity, drawer, R.id.drawer_search, SearchFragment::new);
+        bind(activity, drawer, R.id.drawer_profile, ProfileFragment::new);
+        bind(activity, drawer, R.id.drawer_settings, SettingsFragment::new);
 
         drawer.findViewById(R.id.btn_close_drawer).setOnClickListener(v ->
                 drawer.closeDrawer(GravityCompat.START));
 
         drawer.findViewById(R.id.drawer_logout).setOnClickListener(v -> {
             drawer.closeDrawer(GravityCompat.START);
-            AuthRepository.logOut(activity);
+            new androidx.appcompat.app.AlertDialog.Builder(activity)
+                    .setTitle("Log out?")
+                    .setMessage("You will need to log in again to see your places.")
+                    .setPositiveButton("Log out", (d, w) -> AuthRepository.logOut(activity))
+                    .setNegativeButton("Cancel", null)
+                    .show();
         });
 
         bindUser(drawer);
@@ -62,10 +67,15 @@ public class DrawerMenu {
         ((TextView) drawer.findViewById(R.id.drawer_handle)).setText("@" + UserSession.getUsername(context));
     }
 
-    private static void bind(AppCompatActivity activity, DrawerLayout drawer, int id, Fragment fragment) {
+    /** Makes a brand new screen every time, so no old data or state is carried over. */
+    private interface ScreenFactory {
+        Fragment create();
+    }
+
+    private static void bind(AppCompatActivity activity, DrawerLayout drawer, int id, ScreenFactory factory) {
         drawer.findViewById(id).setOnClickListener(v -> {
             drawer.closeDrawer(GravityCompat.START);
-            open(activity, fragment);
+            open(activity, factory.create());
         });
     }
 }

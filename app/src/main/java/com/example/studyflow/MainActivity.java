@@ -76,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private final Map<Integer, BitmapDescriptor> icons = new HashMap<>();   // marker picture -> icon
     private final Set<String> selectedCategories = new HashSet<>();         // lower case; empty = all
     private boolean loadErrorShown;
+    private Set<String> focusIds;       // when not null, the map only shows these spots (by id)
 
     private FusedLocationProviderClient locationClient;
     private Location lastLocation;     // where the user was when they last tapped "my location"
@@ -127,6 +128,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         setupCrosshair();
         setupFilterChips();
+        findViewById(R.id.btn_clear_focus).setOnClickListener(v -> clearFocus());
         setupNearbySheet();
         findViewById(R.id.btn_my_location).setOnClickListener(v -> onMyLocationClicked());
 
@@ -350,8 +352,73 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     // ------------------------------------------------------------------ filter
 
     private boolean matchesFilter(Spot spot) {
+        if (focusIds != null && !focusIds.contains(spot.getId())) return false;
         return selectedCategories.isEmpty()
                 || selectedCategories.contains(spot.getCategory().toLowerCase(Locale.ROOT));
+    }
+
+    // ------------------------------------- "show on map" for Album, Saved, Search, Profile
+
+    /** Leaves any open screen, centres the map on one spot and opens its name bubble. */
+    public void focusOnSpot(Spot spot) {
+        if (googleMap == null) return;
+        showMapScreen();
+        clearFocus();
+        ((ChipGroup) findViewById(R.id.filter_group)).clearCheck(); // a category chip must not hide it
+
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                new LatLng(spot.getLatitude(), spot.getLongitude()), LOCATION_ZOOM + 2));
+        Marker marker = markers.get(spot.getId());
+        if (marker != null) {
+            marker.setVisible(true);
+            marker.showInfoWindow();
+        }
+    }
+
+    /** Leaves any open screen and makes the map show only these spots, zoomed to fit them. */
+    public void showSpotsOnMap(List<Spot> spots, String label) {
+        if (googleMap == null || spots.isEmpty()) return;
+        showMapScreen();
+        ((ChipGroup) findViewById(R.id.filter_group)).clearCheck();
+
+        focusIds = new HashSet<>();
+        com.google.android.gms.maps.model.LatLngBounds.Builder bounds =
+                new com.google.android.gms.maps.model.LatLngBounds.Builder();
+        for (Spot spot : spots) {
+            focusIds.add(spot.getId());
+            bounds.include(new LatLng(spot.getLatitude(), spot.getLongitude()));
+        }
+        applyFilter();
+
+        ((TextView) findViewById(R.id.focus_label)).setText(label + " (" + spots.size() + ")");
+        findViewById(R.id.focus_banner).setVisibility(View.VISIBLE);
+
+        if (spots.size() == 1) {
+            Spot only = spots.get(0);
+            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                    new LatLng(only.getLatitude(), only.getLongitude()), LOCATION_ZOOM + 1));
+        } else {
+            try {
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 140));
+            } catch (IllegalStateException e) {
+                // the map has no size yet: use the first spot instead
+                Spot first = spots.get(0);
+                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                        new LatLng(first.getLatitude(), first.getLongitude()), DEFAULT_ZOOM));
+            }
+        }
+    }
+
+    /** Back to showing every spot (the "Show all" button on the banner). */
+    private void clearFocus() {
+        if (focusIds == null) return;
+        focusIds = null;
+        findViewById(R.id.focus_banner).setVisibility(View.GONE);
+        applyFilter();
+    }
+
+    private void showMapScreen() {
+        getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
     }
 
     private void applyFilter() {
@@ -494,10 +561,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         nearbyAdapter.setItems(items);
 
-        int km = Math.round(NEARBY_RADIUS_METERS / 1000f);
+        String radius = AppSettings.formatRadius(this, NEARBY_RADIUS_METERS);
         String subtitle = items.isEmpty()
-                ? "Nothing within " + km + " km yet"
-                : items.size() + (items.size() == 1 ? " place" : " places") + " within " + km + " km";
+                ? "Nothing within " + radius + " yet"
+                : items.size() + (items.size() == 1 ? " place" : " places") + " within " + radius;
         ((TextView) findViewById(R.id.nearby_subtitle)).setText(subtitle);
         findViewById(R.id.nearby_empty).setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
         findViewById(R.id.nearby_list).setVisibility(items.isEmpty() ? View.GONE : View.VISIBLE);

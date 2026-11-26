@@ -12,6 +12,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
+/**
+ * Settings: change password, privacy (default for new posts, make all posts private / public),
+ * distance units and log out. The options are saved on the phone in AppSettings.
+ */
 public class SettingsFragment extends Fragment {
 
     public SettingsFragment() {}
@@ -30,31 +36,68 @@ public class SettingsFragment extends Fragment {
         view.findViewById(R.id.btn_back).setOnClickListener(v ->
                 requireActivity().getOnBackPressedDispatcher().onBackPressed());
 
-        view.findViewById(R.id.row_edit_profile).setOnClickListener(v -> toast("Edit profile (UI only)"));
-        view.findViewById(R.id.row_password).setOnClickListener(v -> toast("Change password (UI only)"));
-        view.findViewById(R.id.row_email).setOnClickListener(v -> toast("Change email (UI only)"));
-
-        bindCheckRow(view, R.id.row_public_posts, R.id.chk_public_posts);
-        bindCheckRow(view, R.id.row_public_profile, R.id.chk_public_profile);
-        bindCheckRow(view, R.id.row_notifications, R.id.chk_notifications);
-
-        TextView units = view.findViewById(R.id.row_units_value);
-        view.findViewById(R.id.row_units).setOnClickListener(v ->
-                units.setText(units.getText().toString().equals("km") ? "mi" : "km"));
-
+        // ---- Account
+        TextView nameValue = view.findViewById(R.id.row_name_value);
+        nameValue.setText(UserSession.getDisplayName(requireContext()));
+        view.findViewById(R.id.row_edit_profile).setOnClickListener(v ->
+                AccountDialogs.editName(requireActivity(), () -> {
+                    if (getView() != null) nameValue.setText(UserSession.getDisplayName(requireContext()));
+                }));
+        view.findViewById(R.id.row_password).setOnClickListener(v ->
+                AccountDialogs.changePassword(requireActivity()));
         ((TextView) view.findViewById(R.id.row_email_value)).setText(UserSession.getEmail());
 
+        // ---- Privacy
+        CheckBox defaultPublic = view.findViewById(R.id.chk_public_posts);
+        defaultPublic.setChecked(AppSettings.defaultPublic(requireContext()));
+        view.findViewById(R.id.row_public_posts).setOnClickListener(v -> defaultPublic.toggle());
+        defaultPublic.setOnCheckedChangeListener((box, checked) ->
+                AppSettings.setDefaultPublic(requireContext(), checked));
+
+        view.findViewById(R.id.row_all_private).setOnClickListener(v -> confirmVisibility(false));
+        view.findViewById(R.id.row_all_public).setOnClickListener(v -> confirmVisibility(true));
+
+        // ---- Preferences
+        TextView units = view.findViewById(R.id.row_units_value);
+        units.setText(AppSettings.unitName(requireContext()));
+        view.findViewById(R.id.row_units).setOnClickListener(v -> {
+            AppSettings.setUseMiles(requireContext(), !AppSettings.useMiles(requireContext()));
+            units.setText(AppSettings.unitName(requireContext()));
+        });
+
+        // ---- Log out
         view.findViewById(R.id.btn_logout).setOnClickListener(v ->
-                AuthRepository.logOut(requireActivity()));
-        view.findViewById(R.id.btn_delete).setOnClickListener(v -> toast("Delete account (UI only)"));
+                new MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Log out?")
+                        .setMessage("You will need to log in again to see your places.")
+                        .setPositiveButton("Log out", (d, w) -> AuthRepository.logOut(requireActivity()))
+                        .setNegativeButton("Cancel", null)
+                        .show());
     }
 
-    private void bindCheckRow(View root, int rowId, int checkId) {
-        CheckBox box = root.findViewById(checkId);
-        root.findViewById(rowId).setOnClickListener(v -> box.toggle());
+    private void confirmVisibility(boolean makePublic) {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(makePublic ? "Make all posts public?" : "Make all posts private?")
+                .setMessage(makePublic
+                        ? "Everyone will be able to see all of your places."
+                        : "Only you will be able to see your places.")
+                .setPositiveButton(makePublic ? "Make public" : "Make private", (d, w) ->
+                        SpotRepository.setAllMySpotsPublic(makePublic, new SpotRepository.OnDone() {
+                            @Override
+                            public void onDone() {
+                                toast(makePublic ? "All your posts are public now" : "All your posts are private now");
+                            }
+
+                            @Override
+                            public void onError(String message) {
+                                toast(message);
+                            }
+                        }))
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
-    private void toast(String msg) {
-        Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
+    private void toast(String message) {
+        if (getContext() != null) Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
     }
 }

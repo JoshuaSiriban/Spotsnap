@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.util.Log;
 
 import com.google.firebase.FirebaseNetworkException;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
@@ -156,6 +158,91 @@ public final class AuthRepository {
                     Log.e(TAG, "Could not load profile", e);
                     afterLoad.run();
                 });
+    }
+
+    // --------------------------------------------------------- account changes
+
+    /**
+     * Changes the password. Firebase wants a recent login for this, so the current password is
+     * checked first (re-authentication) and only then the new one is set.
+     */
+    public static void changePassword(String currentPassword, String newPassword, Callback callback) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null || user.getEmail() == null) {
+            callback.onError("You are not logged in.");
+            return;
+        }
+        AuthCredential credential = EmailAuthProvider.getCredential(user.getEmail(), currentPassword);
+        user.reauthenticate(credential)
+                .addOnSuccessListener(unused -> user.updatePassword(newPassword)
+                        .addOnSuccessListener(done -> callback.onSuccess())
+                        .addOnFailureListener(e -> callback.onError(describe(e))))
+                .addOnFailureListener(e -> {
+                    if (e instanceof FirebaseAuthInvalidCredentialsException
+                            || e instanceof FirebaseAuthInvalidUserException) {
+                        callback.onError("Your current password is not correct.");
+                    } else {
+                        callback.onError(describe(e));
+                    }
+                });
+    }
+
+    /** Saves a new full name in users/{uid} and in the local session. Repairs an incomplete profile. */
+    public static void updateFullName(Context context, String fullName, Callback callback) {
+        Context appContext = context.getApplicationContext();
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            callback.onError("You are not logged in.");
+            return;
+        }
+        String uid = user.getUid();
+        String email = user.getEmail() == null ? "" : user.getEmail();
+        DocumentReference userRef = db().collection("users").document(uid);
+        String[] finalUsername = {UserSession.getUsername(appContext)};
+
+        db().runTransaction(transaction -> {
+            com.google.firebase.firestore.DocumentSnapshot snap = transaction.get(userRef);
+            String existing = snap.getString("username");
+
+            if (snap.exists() && existing != null && !existing.isEmpty()) {
+                // normal account: only the name changes
+                transaction.update(userRef, "fullName", fullName);
+                finalUsername[0] = existing;
+                return null;
+            }
+
+            // Incomplete profile (an old account): create the missing fields and claim the username
+            String username = UserSession.getUsername(appContext); // the part of the email before @
+            DocumentReference nameRef = db().collection("usernames").document(username.toLowerCase(Locale.ROOT));
+            com.google.firebase.firestore.DocumentSnapshot claim = transaction.get(nameRef);
+            if (claim.exists() && !uid.equals(claim.getString("uid"))) {
+                username = username + uid.substring(0, 4); // somebody else has that name
+                nameRef = db().collection("usernames").document(username.toLowerCase(Locale.ROOT));
+                claim = null;
+            }
+
+            Map<String, Object> profile = new HashMap<>();
+            profile.put("username", username);
+            profile.put("usernameLower", username.toLowerCase(Locale.ROOT));
+            profile.put("fullName", fullName);
+            profile.put("email", email);
+            if (!snap.contains("createdAt")) profile.put("createdAt", FieldValue.serverTimestamp());
+            transaction.set(userRef, profile, com.google.firebase.firestore.SetOptions.merge());
+
+            if (claim == null || !claim.exists()) {
+                Map<String, Object> claimData = new HashMap<>();
+                claimData.put("uid", uid);
+                transaction.set(nameRef, claimData);
+            }
+            finalUsername[0] = username;
+            return null;
+        }).addOnSuccessListener(unused -> {
+            UserSession.save(appContext, uid, finalUsername[0], fullName);
+            callback.onSuccess();
+        }).addOnFailureListener(e -> {
+            Log.e(TAG, "Could not update the full name", e);
+            callback.onError(describe(e));
+        });
     }
 
     // ---------------------------------------------------------------- log out

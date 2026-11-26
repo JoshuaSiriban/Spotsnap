@@ -41,4 +41,16 @@ public final class Categories {
             default: return 0;               // no tint
         }
     }
+
+    /** Extra words that should find a category in Search ("food" finds Restaurants, ...). */
+    public static String keywords(String category) {
+        switch (normalize(category)) {
+            case RESTAURANTS: return "restaurants restaurant food eat dining";
+            case CAFES: return "cafes cafe coffee";
+            case PARKS: return "parks park garden nature outdoors";
+            case TOURIST: return "tourist attractions attraction sights landmark travel";
+            case HANGOUTS: return "hangouts hangout hang out chill";
+            default: return "other others";
+        }
+    }
 }

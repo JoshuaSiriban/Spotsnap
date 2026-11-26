@@ -161,7 +161,14 @@ public class AddSpotFragment extends Fragment {
 
         view.findViewById(R.id.btn_pin_it).setOnClickListener(v -> savePin());
 
-        if (editingSpot != null) prefillForEditing(view);
+        if (editingSpot != null) {
+            prefillForEditing(view);
+        } else {
+            // Settings > "New posts are public by default" (a restored choice overrides this)
+            MaterialButtonToggleGroup privacyGroup = view.findViewById(R.id.toggle_privacy);
+            privacyGroup.check(AppSettings.defaultPublic(requireContext())
+                    ? R.id.btn_public : R.id.btn_private);
+        }
 
         renderPhotos();
         updateLocationUi();

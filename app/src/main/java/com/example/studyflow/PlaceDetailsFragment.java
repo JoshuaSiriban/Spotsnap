@@ -42,6 +42,13 @@ public class PlaceDetailsFragment extends Fragment {
         return f;
     }
 
+    /** Opens Place Details for a spot from any screen. */
+    public static void open(androidx.fragment.app.FragmentActivity activity, Spot spot) {
+        PlaceDetailsFragment fragment = newInstance(spot.getName(), spot.getCategory(), spot.getReview());
+        fragment.setSpot(spot);
+        DrawerMenu.open(activity, fragment);
+    }
+
     /** Shows a message over the photo strip, or hides it when {@code message} is null. */
     private void showStatus(TextView status, @Nullable String message) {
         status.setText(message);
@@ -129,11 +136,7 @@ public class PlaceDetailsFragment extends Fragment {
         }
 
         view.findViewById(R.id.btn_like).setOnClickListener(v -> v.setSelected(!v.isSelected()));
-        view.findViewById(R.id.btn_save).setOnClickListener(v -> {
-            v.setSelected(!v.isSelected());
-            Toast.makeText(requireContext(), v.isSelected() ? "Saved to your places" : "Removed from saved",
-                    Toast.LENGTH_SHORT).show();
-        });
+        setupSaveButton(view);
 
         MaterialButton follow = view.findViewById(R.id.btn_follow);
         follow.setOnClickListener(v ->
@@ -175,6 +178,42 @@ public class PlaceDetailsFragment extends Fragment {
             public void onError(String message) {
                 Toast.makeText(appContext, message, Toast.LENGTH_LONG).show();
             }
+        });
+    }
+
+    /** The bookmark button: shows whether the spot is saved and saves / unsaves it. */
+    private void setupSaveButton(View root) {
+        View saveButton = root.findViewById(R.id.btn_save);
+        if (spot == null || spot.getId() == null) {
+            // old sample spots are not in the database, so they cannot be saved
+            saveButton.setOnClickListener(v -> Toast.makeText(requireContext(),
+                    "This sample place cannot be saved.", Toast.LENGTH_SHORT).show());
+            return;
+        }
+
+        saveButton.setEnabled(false); // until we know the current state
+        SavedRepository.isSaved(spot.getId(), saved -> {
+            if (getView() == null) return;
+            saveButton.setSelected(saved);
+            saveButton.setEnabled(true);
+        });
+
+        saveButton.setOnClickListener(v -> {
+            boolean save = !v.isSelected();
+            v.setEnabled(false);
+            SavedRepository.setSaved(spot, save, error -> {
+                if (getView() == null) return;
+                v.setEnabled(true);
+                if (error != null) {
+                    Toast.makeText(requireContext(), error, Toast.LENGTH_LONG).show();
+                    return;
+                }
+                v.setSelected(save);
+                spot.setSaves(Math.max(0, spot.getSaves() + (save ? 1 : -1)));
+                ((TextView) getView().findViewById(R.id.savesCount)).setText(String.valueOf(spot.getSaves()));
+                Toast.makeText(requireContext(), save ? "Saved to your places" : "Removed from saved",
+                        Toast.LENGTH_SHORT).show();
+            });
         });
     }
 }

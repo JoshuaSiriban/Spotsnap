@@ -307,6 +307,119 @@ public class SpotRepository {
         });
     }
 
+    // ----------------------------------------------- lists for the personal screens
+
+    /** The logged in user's own spots (public and private), newest first. */
+    public static void loadMySpots(Context context, OnSpotsLoaded callback, @Nullable OnError onError) {
+        if (!UserSession.isLoggedIn()) {
+            callback.onLoaded(new ArrayList<>());
+            return;
+        }
+        Context app = context.getApplicationContext();
+        db().collection(SPOTS).whereEqualTo("creatorId", UserSession.getUid()).get()
+                .addOnSuccessListener(snapshot -> {
+                    ArrayList<Spot> result = new ArrayList<>();
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        Spot spot = toSpot(app, doc);
+                        if (spot != null) result.add(spot);
+                    }
+                    sortNewestFirst(result);
+                    callback.onLoaded(result);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Could not load my spots", e);
+                    if (onError != null) onError.onError("Could not load your places.");
+                });
+    }
+
+    /** Every spot the user may see: all public spots plus their own private ones. */
+    public static void loadVisibleSpots(Context context, OnSpotsLoaded callback, @Nullable OnError onError) {
+        Context app = context.getApplicationContext();
+        Map<String, Spot> all = new LinkedHashMap<>();
+        int[] pending = {UserSession.isLoggedIn() ? 2 : 1};
+        boolean[] failed = {false};
+
+        Runnable oneDone = () -> {
+            pending[0]--;
+            if (pending[0] > 0 || failed[0]) return;
+            ArrayList<Spot> result = new ArrayList<>(all.values());
+            sortNewestFirst(result);
+            callback.onLoaded(result);
+        };
+        java.util.function.Consumer<Exception> oneFailed = e -> {
+            Log.e(TAG, "Could not load spots", e);
+            if (failed[0]) return;
+            failed[0] = true;
+            if (onError != null) onError.onError("Could not load places.");
+        };
+
+        db().collection(SPOTS).whereEqualTo("isPublic", true).get()
+                .addOnSuccessListener(snapshot -> {
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        Spot spot = toSpot(app, doc);
+                        if (spot != null) all.put(spot.getId(), spot);
+                    }
+                    oneDone.run();
+                })
+                .addOnFailureListener(oneFailed::accept);
+
+        if (UserSession.isLoggedIn()) {
+            db().collection(SPOTS).whereEqualTo("creatorId", UserSession.getUid()).get()
+                    .addOnSuccessListener(snapshot -> {
+                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                            Spot spot = toSpot(app, doc);
+                            if (spot != null) all.put(spot.getId(), spot);
+                        }
+                        oneDone.run();
+                    })
+                    .addOnFailureListener(oneFailed::accept);
+        }
+    }
+
+    /** Loads one spot by id, or calls back with null when it no longer exists / is not visible. */
+    public static void loadSpot(Context context, String spotId, java.util.function.Consumer<Spot> callback) {
+        Context app = context.getApplicationContext();
+        db().collection(SPOTS).document(spotId).get()
+                .addOnSuccessListener(doc -> callback.accept(doc.exists() ? toSpot(app, doc) : null))
+                .addOnFailureListener(e -> callback.accept(null));
+    }
+
+    /** Makes all of the logged in user's posts public or private in one go (Settings > Privacy). */
+    public static void setAllMySpotsPublic(boolean makePublic, OnDone callback) {
+        if (!UserSession.isLoggedIn()) {
+            callback.onError("You are not logged in.");
+            return;
+        }
+        db().collection(SPOTS).whereEqualTo("creatorId", UserSession.getUid()).get()
+                .addOnSuccessListener(snapshot -> {
+                    List<DocumentSnapshot> docs = snapshot.getDocuments();
+                    if (docs.isEmpty()) {
+                        callback.onDone();
+                        return;
+                    }
+                    WriteBatch batch = db().batch(); // a batch holds up to 500 writes, plenty here
+                    int count = 0;
+                    for (DocumentSnapshot doc : docs) {
+                        if (count++ >= 450) break;
+                        batch.update(doc.getReference(), "isPublic", makePublic);
+                    }
+                    batch.commit()
+                            .addOnSuccessListener(unused -> callback.onDone())
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Could not change the visibility", e);
+                                callback.onError("Could not change your posts. " + e.getLocalizedMessage());
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Could not read my spots", e);
+                    callback.onError("Could not change your posts. " + e.getLocalizedMessage());
+                });
+    }
+
+    public static void sortNewestFirst(List<Spot> spots) {
+        java.util.Collections.sort(spots, (a, b) -> Long.compare(b.getCreatedAt(), a.getCreatedAt()));
+    }
+
     // ------------------------------------------------------------ converting
 
     @SuppressWarnings("unchecked")
@@ -352,6 +465,8 @@ public class SpotRepository {
         spot.setPublic(isPublic == null || isPublic);
         spot.setPhotoCount(photoCount == null ? photos.size() : photoCount.intValue());
         if (thumbnail != null) spot.setThumbnail(thumbnail.toBytes());
+        com.google.firebase.Timestamp createdAt = doc.getTimestamp("createdAt");
+        if (createdAt != null) spot.setCreatedAt(createdAt.toDate().getTime());
         return spot;
     }
 }

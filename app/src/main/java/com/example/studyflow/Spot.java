@@ -21,6 +21,7 @@ public class Spot {
     private String creatorId;     // Firebase uid of the user who pinned the spot
     private boolean isPublic = true;
     private int photoCount;       // number of pictures saved in Firestore
+    private long createdAt;        // when it was pinned (milliseconds), 0 if unknown
     private byte[] thumbnail;     // small preview picture (for list screens)
 
     public Spot(String name, String creator, String review, String category, double latitude, double longitude, ArrayList<Photo> images, int likes, int saves)
@@ -51,6 +52,18 @@ public class Spot {
     public void setLocation(double latitude, double longitude){
         this.latitude = latitude;
         this.longitude = longitude;
+    }
+
+    public void setSaves(int saves){
+        this.saves = saves;
+    }
+
+    public long getCreatedAt(){
+        return createdAt;
+    }
+
+    public void setCreatedAt(long createdAt){
+        this.createdAt = createdAt;
     }
 
     public double getLatitude(){
