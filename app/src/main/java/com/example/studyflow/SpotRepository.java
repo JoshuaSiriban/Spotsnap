@@ -332,6 +332,25 @@ public class SpotRepository {
                 });
     }
 
+    /** Every public spot (any author), newest first. Used by the Activity Feed. */
+    public static void loadPublicSpots(Context context, OnSpotsLoaded callback, @Nullable OnError onError) {
+        Context app = context.getApplicationContext();
+        db().collection(SPOTS).whereEqualTo("isPublic", true).get()
+                .addOnSuccessListener(snapshot -> {
+                    ArrayList<Spot> result = new ArrayList<>();
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        Spot spot = toSpot(app, doc);
+                        if (spot != null) result.add(spot);
+                    }
+                    sortNewestFirst(result);
+                    callback.onLoaded(result);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Could not load public spots", e);
+                    if (onError != null) onError.onError("Could not load the feed.");
+                });
+    }
+
     /** Every spot the user may see: all public spots plus their own private ones. */
     public static void loadVisibleSpots(Context context, OnSpotsLoaded callback, @Nullable OnError onError) {
         Context app = context.getApplicationContext();

@@ -26,6 +26,7 @@ public class DrawerMenu {
     }
 
     public static void setup(AppCompatActivity activity, DrawerLayout drawer) {
+        bind(activity, drawer, R.id.drawer_activity, ActivityFeedFragment::new);
         bind(activity, drawer, R.id.drawer_saved, SavedLocationsFragment::new);
         bind(activity, drawer, R.id.drawer_album, AlbumFragment::new);
         bind(activity, drawer, R.id.drawer_search, SearchFragment::new);

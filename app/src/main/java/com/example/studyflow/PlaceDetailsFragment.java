@@ -135,12 +135,9 @@ public class PlaceDetailsFragment extends Fragment {
             showStatus(status, "No photos for this spot yet");
         }
 
-        view.findViewById(R.id.btn_like).setOnClickListener(v -> v.setSelected(!v.isSelected()));
+        setupLikeButton(view);
         setupSaveButton(view);
-
-        MaterialButton follow = view.findViewById(R.id.btn_follow);
-        follow.setOnClickListener(v ->
-                follow.setText(follow.getText().toString().equals("Follow") ? "Following" : "Follow"));
+        setupFollowButton(view);
 
         view.findViewById(R.id.btn_go).setOnClickListener(v ->
                 Toast.makeText(requireContext(), "Directions (UI only)", Toast.LENGTH_SHORT).show());
@@ -214,6 +211,77 @@ public class PlaceDetailsFragment extends Fragment {
                 Toast.makeText(requireContext(), save ? "Saved to your places" : "Removed from saved",
                         Toast.LENGTH_SHORT).show();
             });
+        });
+    }
+
+    /** The heart button: shows whether you liked the spot and likes / unlikes it in Firestore. */
+    private void setupLikeButton(View root) {
+        View likeButton = root.findViewById(R.id.btn_like);
+        if (spot == null || spot.getId() == null) {
+            likeButton.setOnClickListener(v -> Toast.makeText(requireContext(),
+                    "This sample place cannot be liked.", Toast.LENGTH_SHORT).show());
+            return;
+        }
+
+        likeButton.setEnabled(false); // until we know the current state
+        SocialRepository.isLiked(spot.getId(), liked -> {
+            if (getView() == null) return;
+            likeButton.setSelected(liked);
+            likeButton.setEnabled(true);
+        });
+
+        likeButton.setOnClickListener(v -> {
+            boolean like = !v.isSelected();
+            v.setEnabled(false);
+            SocialRepository.setLiked(spot, like, error -> {
+                if (getView() == null) return;
+                v.setEnabled(true);
+                if (error != null) {
+                    Toast.makeText(requireContext(), error, Toast.LENGTH_LONG).show();
+                    return;
+                }
+                v.setSelected(like);
+                spot.setLikes(Math.max(0, spot.getLikes() + (like ? 1 : -1)));
+                ((TextView) getView().findViewById(R.id.likesCount)).setText(String.valueOf(spot.getLikes()));
+            });
+        });
+    }
+
+    /** Follow / Following button for the person who pinned the spot (hidden for your own posts). */
+    private void setupFollowButton(View root) {
+        MaterialButton follow = root.findViewById(R.id.btn_follow);
+        String creatorId = spot == null ? null : spot.getCreatorId();
+        if (creatorId == null || creatorId.equals(UserSession.getUid())) {
+            follow.setVisibility(View.GONE); // your own post, or an old sample spot
+            return;
+        }
+
+        boolean[] following = {false};
+        follow.setEnabled(false);
+        SocialRepository.isFollowing(creatorId, isFollowing -> {
+            if (getView() == null) return;
+            following[0] = isFollowing;
+            follow.setText(isFollowing ? "Following" : "Follow");
+            follow.setEnabled(true);
+        });
+
+        follow.setOnClickListener(v -> {
+            boolean follow_ = !following[0];
+            follow.setEnabled(false);
+            SocialRepository.setFollowing(UserSession.getUsername(requireContext()), creatorId,
+                    spot.getCreator(), follow_, error -> {
+                        if (getView() == null) return;
+                        follow.setEnabled(true);
+                        if (error != null) {
+                            Toast.makeText(requireContext(), error, Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        following[0] = follow_;
+                        follow.setText(follow_ ? "Following" : "Follow");
+                        Toast.makeText(requireContext(), follow_
+                                ? "You follow @" + spot.getCreator()
+                                : "Unfollowed @" + spot.getCreator(), Toast.LENGTH_SHORT).show();
+                    });
         });
     }
 }

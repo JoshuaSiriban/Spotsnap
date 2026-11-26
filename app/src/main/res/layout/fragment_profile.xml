@@ -75,6 +75,16 @@
                 android:textColor="@color/muted_dark"
                 android:textSize="14sp" />
 
+            <TextView
+                android:id="@+id/profile_follow_counts"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="– followers  ·  – following"
+                android:textColor="@color/ink"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
             <!-- Shared locations / uploaded pictures / saved places -->
             <LinearLayout
                 android:layout_width="match_parent"

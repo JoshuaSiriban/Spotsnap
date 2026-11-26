@@ -54,6 +54,10 @@ public class Spot {
         this.longitude = longitude;
     }
 
+    public void setLikes(int likes){
+        this.likes = likes;
+    }
+
     public void setSaves(int saves){
         this.saves = saves;
     }

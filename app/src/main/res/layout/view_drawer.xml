@@ -15,6 +15,10 @@
             <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_chevron_right" app:tint="@color/muted" android:importantForAccessibility="no"/>
         </LinearLayout>
 
+        <LinearLayout android:id="@+id/drawer_activity" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="8dp" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="20dp" android:paddingEnd="20dp" android:clickable="true" android:focusable="true" android:background="@drawable/bg_drawer_card">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_activity" app:tint="@color/cream" android:importantForAccessibility="no"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="16dp" android:text="Activity" android:textColor="@color/cream" android:textSize="16sp"/>
+        </LinearLayout>
         <LinearLayout android:id="@+id/drawer_saved" android:layout_width="match_parent" android:layout_height="60dp" android:layout_marginTop="8dp" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="20dp" android:paddingEnd="20dp" android:clickable="true" android:focusable="true" android:background="@drawable/bg_drawer_card">
             <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_bookmark" app:tint="@color/cream" android:importantForAccessibility="no"/>
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="16dp" android:text="Saved Locations" android:textColor="@color/cream" android:textSize="16sp"/>

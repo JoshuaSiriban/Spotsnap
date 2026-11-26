@@ -88,6 +88,23 @@ public class ProfileFragment extends Fragment {
         recommended.setAdapter(recommendedAdapter);
 
         loadMyPosts(view);
+        loadFollowCounts();
+    }
+
+    /** "12 followers · 5 following" (counted in Firestore). */
+    private void loadFollowCounts() {
+        long[] counts = {-2, -2}; // -2 = not loaded yet, -1 = failed
+        String uid = UserSession.getUid();
+        SocialRepository.countFollowers(uid, n -> { counts[0] = n; showFollowCounts(counts); });
+        SocialRepository.countFollowing(uid, n -> { counts[1] = n; showFollowCounts(counts); });
+    }
+
+    private void showFollowCounts(long[] counts) {
+        if (counts[0] == -2 || counts[1] == -2) return; // wait for both
+        String followers = counts[0] < 0 ? "–" : String.valueOf(counts[0]);
+        String following = counts[1] < 0 ? "–" : String.valueOf(counts[1]);
+        setText(R.id.profile_follow_counts, followers + (counts[0] == 1 ? " follower" : " followers")
+                + "  ·  " + following + " following");
     }
 
     private void showNames(View view) {
