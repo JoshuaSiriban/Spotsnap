@@ -12,7 +12,7 @@
                 <TextView android:id="@+id/txt_name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="Cafe Ocampo" android:textColor="@color/ink" android:textSize="34sp" android:textStyle="bold" android:fontFamily="serif"/>
                 <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:gravity="center_vertical">
                     <ImageView android:layout_width="18dp" android:layout_height="18dp" android:src="@drawable/ic_pin" app:tint="@color/coral" android:importantForAccessibility="no"/>
-                    <TextView android:id="@+id/txt_location" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:text="Malate, Manila  ·  0.4 km away" android:textColor="@color/muted_dark" android:textSize="14sp"/>
+                    <TextView android:id="@+id/txt_location" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:text="" android:textColor="@color/muted_dark" android:textSize="14sp"/>
                 </LinearLayout>
             </LinearLayout>
 
