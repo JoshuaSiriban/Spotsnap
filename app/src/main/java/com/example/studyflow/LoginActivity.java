@@ -2,11 +2,10 @@ package com.example.studyflow;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Patterns;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,6 +18,7 @@ public class LoginActivity extends AppCompatActivity {
     private EditText emailInput;
     private EditText passwordInput;
     private Button loginButton;
+    private TextView formError; // general errors (no internet, too many attempts, ...)
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,9 +36,13 @@ public class LoginActivity extends AppCompatActivity {
         emailInput = findViewById(R.id.emailInput);
         passwordInput = findViewById(R.id.passwordInput);
         loginButton = findViewById(R.id.loginButton);
+        formError = findViewById(R.id.formError);
         TextView createTv = findViewById(R.id.createTv);
+        TextView forgotTv = findViewById(R.id.forgotTv);
 
         createTv.setOnClickListener(v -> startActivity(new Intent(this, SignupActivity.class)));
+        forgotTv.setOnClickListener(v ->
+                AccountDialogs.forgotPassword(this, emailInput.getText().toString().trim()));
         loginButton.setOnClickListener(v -> attemptLogin());
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -49,31 +53,57 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void attemptLogin() {
+        hideFormError();
         String email = emailInput.getText().toString().trim();
         String password = passwordInput.getText().toString();
 
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            emailInput.setError("Enter a valid email");
+        String emailError = AuthRepository.validateEmail(email);
+        String passwordError = password.isEmpty() ? "Enter your password" : null;
+
+        if (emailError != null) emailInput.setError(emailError);
+        if (passwordError != null) passwordInput.setError(passwordError);
+        if (emailError != null) {
+            emailInput.requestFocus();
             return;
         }
-        if (password.isEmpty()) {
-            passwordInput.setError("Enter your password");
+        if (passwordError != null) {
+            passwordInput.requestFocus();
             return;
         }
 
         setBusy(true);
-        AuthRepository.logIn(this, email, password, new AuthRepository.Callback() {
+        AuthRepository.logIn(this, email, password, new AuthRepository.FormCallback() {
             @Override
             public void onSuccess() {
                 openMain();
             }
 
             @Override
-            public void onError(String message) {
+            public void onError(AuthRepository.Field field, String message) {
                 setBusy(false);
-                Toast.makeText(LoginActivity.this, message, Toast.LENGTH_LONG).show();
+                switch (field) {
+                    case EMAIL:
+                        emailInput.setError(message);
+                        emailInput.requestFocus();
+                        break;
+                    case PASSWORD:
+                        passwordInput.setError(message);
+                        passwordInput.requestFocus();
+                        break;
+                    default:
+                        showFormError(message);
+                }
             }
         });
+    }
+
+    private void showFormError(String message) {
+        formError.setText(message);
+        formError.setVisibility(View.VISIBLE);
+    }
+
+    private void hideFormError() {
+        formError.setVisibility(View.GONE);
     }
 
     private void setBusy(boolean busy) {

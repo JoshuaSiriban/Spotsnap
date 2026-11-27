@@ -16,7 +16,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 /**
  * Settings: change password, privacy (default for new posts, make all posts private / public),
- * distance units and log out. The options are saved on the phone in AppSettings.
+ * distance units and delete account (log out is in the side menu). The options are saved on the phone in AppSettings.
  */
 public class SettingsFragment extends Fragment {
 
@@ -65,14 +65,9 @@ public class SettingsFragment extends Fragment {
             units.setText(AppSettings.unitName(requireContext()));
         });
 
-        // ---- Log out
-        view.findViewById(R.id.btn_logout).setOnClickListener(v ->
-                new MaterialAlertDialogBuilder(requireContext())
-                        .setTitle("Log out?")
-                        .setMessage("You will need to log in again to see your places.")
-                        .setPositiveButton("Log out", (d, w) -> AuthRepository.logOut(requireActivity()))
-                        .setNegativeButton("Cancel", null)
-                        .show());
+        // ---- Delete account (asks for the password, then removes the account and its data)
+        view.findViewById(R.id.btn_delete_account).setOnClickListener(v ->
+                AccountDialogs.deleteAccount(requireActivity()));
     }
 
     private void confirmVisibility(boolean makePublic) {

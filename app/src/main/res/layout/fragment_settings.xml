@@ -54,7 +54,7 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <com.google.android.material.button.MaterialButton android:id="@+id/btn_logout" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="28dp" android:text="Log out" android:textColor="@color/coral" app:strokeColor="@color/coral" app:cornerRadius="14dp"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btn_delete_account" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="28dp" android:text="Delete account" android:textColor="@color/coral" app:strokeColor="@color/coral" app:cornerRadius="14dp"/>
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

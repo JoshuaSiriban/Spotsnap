@@ -2,7 +2,7 @@ package com.example.studyflow;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Patterns;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -16,13 +16,12 @@ import androidx.core.view.WindowInsetsCompat;
 
 public class SignupActivity extends AppCompatActivity {
 
-    private static final int MIN_PASSWORD_LENGTH = 6; // Firebase Authentication's minimum
-
     private EditText usernameInput;
     private EditText fullNameInput;
     private EditText emailInput;
     private EditText passwordInput;
     private Button signupButton;
+    private TextView formError; // general errors (no internet, ...)
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +34,7 @@ public class SignupActivity extends AppCompatActivity {
         emailInput = findViewById(R.id.emailInput);
         passwordInput = findViewById(R.id.passwordInput);
         signupButton = findViewById(R.id.signupButton);
+        formError = findViewById(R.id.formError);
         TextView signupTv = findViewById(R.id.signupTv);
 
         signupTv.setOnClickListener(v -> finish()); // back to the login screen
@@ -48,22 +48,30 @@ public class SignupActivity extends AppCompatActivity {
     }
 
     private void attemptSignup() {
+        hideFormError();
         String username = usernameInput.getText().toString().trim();
         String fullName = fullNameInput.getText().toString().trim();
         String email = emailInput.getText().toString().trim();
         String password = passwordInput.getText().toString();
 
         String usernameError = AuthRepository.validateUsername(username);
+        String emailError = AuthRepository.validateEmail(email);
+        String passwordError = AuthRepository.validateNewPassword(password);
+
+        // Mark every wrong field, and put the cursor in the first one.
+        if (usernameError != null) usernameInput.setError(usernameError);
+        if (emailError != null) emailInput.setError(emailError);
+        if (passwordError != null) passwordInput.setError(passwordError);
         if (usernameError != null) {
-            usernameInput.setError(usernameError);
+            usernameInput.requestFocus();
             return;
         }
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            emailInput.setError("Enter a valid email");
+        if (emailError != null) {
+            emailInput.requestFocus();
             return;
         }
-        if (password.length() < MIN_PASSWORD_LENGTH) {
-            passwordInput.setError("Use at least " + MIN_PASSWORD_LENGTH + " characters");
+        if (passwordError != null) {
+            passwordInput.requestFocus();
             return;
         }
         if (fullName.isEmpty()) {
@@ -71,7 +79,7 @@ public class SignupActivity extends AppCompatActivity {
         }
 
         setBusy(true);
-        AuthRepository.signUp(this, username, fullName, email, password, new AuthRepository.Callback() {
+        AuthRepository.signUp(this, username, fullName, email, password, new AuthRepository.FormCallback() {
             @Override
             public void onSuccess() {
                 Toast.makeText(SignupActivity.this, "Account created!", Toast.LENGTH_SHORT).show();
@@ -83,11 +91,35 @@ public class SignupActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onError(String message) {
+            public void onError(AuthRepository.Field field, String message) {
                 setBusy(false);
-                Toast.makeText(SignupActivity.this, message, Toast.LENGTH_LONG).show();
+                switch (field) {
+                    case USERNAME:
+                        usernameInput.setError(message);
+                        usernameInput.requestFocus();
+                        break;
+                    case EMAIL:
+                        emailInput.setError(message);
+                        emailInput.requestFocus();
+                        break;
+                    case PASSWORD:
+                        passwordInput.setError(message);
+                        passwordInput.requestFocus();
+                        break;
+                    default:
+                        showFormError(message);
+                }
             }
         });
+    }
+
+    private void showFormError(String message) {
+        formError.setText(message);
+        formError.setVisibility(View.VISIBLE);
+    }
+
+    private void hideFormError() {
+        formError.setVisibility(View.GONE);
     }
 
     private void setBusy(boolean busy) {

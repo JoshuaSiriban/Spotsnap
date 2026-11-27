@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -54,13 +55,46 @@
         android:textStyle="bold"
         android:textSize="16sp" />
 
-    <EditText
-        android:id="@+id/passwordInput"
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Password"
-        android:inputType="textPassword"
-        android:saveEnabled="true" />
+        app:boxBackgroundMode="filled"
+        app:boxBackgroundColor="@android:color/transparent"
+        app:boxStrokeColor="#B15D19"
+        app:endIconMode="password_toggle">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/passwordInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPassword"
+            android:saveEnabled="true" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:id="@+id/forgotTv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:minHeight="48dp"
+        android:gravity="center_vertical"
+        android:text="Forgot password?"
+        android:textColor="#B15D19"
+        android:textSize="14sp"
+        android:fontFamily="serif"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <TextView
+        android:id="@+id/formError"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:paddingBottom="8dp"
+        android:accessibilityLiveRegion="polite"
+        android:textColor="@color/coral"
+        android:textSize="14sp" />
 
     <Button
         android:id="@+id/loginButton"

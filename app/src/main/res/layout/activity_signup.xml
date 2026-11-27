@@ -92,6 +92,17 @@
         android:inputType="textPassword"
         android:saveEnabled="true" />
 
+    <TextView
+        android:id="@+id/formError"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:accessibilityLiveRegion="polite"
+        android:textColor="@color/coral"
+        android:textSize="14sp" />
+
     <Button
         android:id="@+id/signupButton"
         android:layout_width="match_parent"
