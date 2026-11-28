@@ -17,6 +17,9 @@ public class Spot {
 
     private int saves;
 
+    private long ratingSum;       // total of all star ratings (1 to 5 each)
+    private int ratingCount;      // how many people rated this spot
+
     private String id;            // Firestore document id (null until the spot is saved)
     private String creatorId;     // Firebase uid of the user who pinned the spot
     private boolean isPublic = true;
@@ -61,6 +64,42 @@ public class Spot {
     public void setSaves(int saves){
         this.saves = saves;
     }
+
+    // ------------------------------------------------------------ ratings
+
+    public void setRating(long ratingSum, int ratingCount){
+        this.ratingSum = Math.max(0, ratingSum);
+        this.ratingCount = Math.max(0, ratingCount);
+    }
+
+    public long getRatingSum(){
+        return ratingSum;
+    }
+
+    public int getRatingCount(){
+        return ratingCount;
+    }
+
+    public boolean hasRatings(){
+        return ratingCount > 0;
+    }
+
+    /** Average stars from 1.0 to 5.0, or 0 when nobody has rated the spot yet. */
+    public double getAverageRating(){
+        return ratingCount == 0 ? 0 : (double) ratingSum / ratingCount;
+    }
+
+    /**
+     * Used to sort "Top rated". Pulls spots with only a few ratings towards 3.5 stars,
+     * so one single 5 star rating does not beat a spot with many good reviews.
+     */
+    public double getRankingScore(){
+        final double priorWeight = 3;
+        final double priorAverage = 3.5;
+        return (ratingSum + priorWeight * priorAverage) / (ratingCount + priorWeight);
+    }
+
+    // ---------------------------------------------------------------------
 
     public long getCreatedAt(){
         return createdAt;

@@ -93,6 +93,8 @@ public class SpotRepository {
         data.put("longitude", spot.getLongitude());
         data.put("likes", 0);
         data.put("saves", 0);
+        data.put("ratingSum", 0);
+        data.put("ratingCount", 0);
         data.put("isPublic", spot.isPublic());
         data.put("photoCount", photos.size());
         if (!photos.isEmpty() && photos.get(0).thumb != null) {
@@ -508,6 +510,10 @@ public class SpotRepository {
         if (thumbnail != null) spot.setThumbnail(thumbnail.toBytes());
         com.google.firebase.Timestamp createdAt = doc.getTimestamp("createdAt");
         if (createdAt != null) spot.setCreatedAt(createdAt.toDate().getTime());
-        return spot;
+
+        // Star ratings (spots without any rating yet simply have no fields)
+        Long ratingSum = doc.getLong("ratingSum");
+        Long ratingCount = doc.getLong("ratingCount");
+        spot.setRating(ratingSum == null ? 0 : ratingSum, ratingCount == null ? 0 : ratingCount.intValue());        return spot;
     }
 }

@@ -48,6 +48,7 @@ import com.google.android.material.chip.ChipGroup;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -68,6 +69,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final float LOCATION_ZOOM = 15f;
     private static final float NEARBY_RADIUS_METERS = 5000f;
     private static final int MAX_NEARBY_SPOTS = 15;
+
+    private static final int SORT_CLOSEST = 0;
+    private static final int SORT_POPULAR = 1;      // most likes first
+    private static final int SORT_TOP_RATED = 2;    // best rated first
+    private int nearbySort = SORT_CLOSEST;
 
     private GoogleMap googleMap;
     private SpotRepository.Subscription spotSubscription; // live updates of the spots from Firestore
@@ -266,6 +272,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         findViewById(R.id.btn_close_nearby).setOnClickListener(v ->
                 nearbySheet.setState(BottomSheetBehavior.STATE_HIDDEN));
+
+        // Closest / Popular / Top rated
+        ChipGroup sortGroup = findViewById(R.id.nearby_sort_group);
+        sortGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.isEmpty()) return;
+            int id = checkedIds.get(0);
+            nearbySort = id == R.id.sort_popular ? SORT_POPULAR
+                    : id == R.id.sort_top_rated ? SORT_TOP_RATED : SORT_CLOSEST;
+            refreshNearby();
+        });
     }
 
     /** The map buttons follow the top of the sheet, then fade out once it is opened wide. */
@@ -353,12 +369,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 marker = googleMap.addMarker(new MarkerOptions()
                         .position(position)
                         .title(spot.getName())
+                        .snippet(ratingSnippet(spot))
                         .icon(iconFor(spot.getCategory())));
                 if (marker == null) continue;
                 markers.put(spot.getId(), marker);
             } else {
                 marker.setPosition(position);
                 marker.setTitle(spot.getName());
+                marker.setSnippet(ratingSnippet(spot));
                 marker.setIcon(iconFor(spot.getCategory()));
             }
             marker.setTag(spot);
@@ -375,6 +393,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }
         refreshNearby();
+    }
+
+    /** "★ 4.5 (12)" shown under the name in the marker bubble, or null when there are no ratings. */
+    private String ratingSnippet(Spot spot) {
+        String label = RatingUtils.label(spot);
+        return label.isEmpty() ? null : label;
     }
 
     private void onSpotsError(String message) {
@@ -578,6 +602,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     /** Rebuilds the nearby list: visible spots within the radius, closest first. */
+    /** Rebuilds the nearby list: visible spots within the radius, sorted by the chosen chip. */
     private void refreshNearby() {
         if (!nearbyVisible || lastLocation == null) return;
 
@@ -588,23 +613,62 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (!(tag instanceof Spot)) continue;
             Spot spot = (Spot) tag;
             if (!matchesFilter(spot)) continue;
+            if (nearbySort == SORT_TOP_RATED && !spot.hasRatings()) continue;   // nothing to rank yet
 
             Location.distanceBetween(lastLocation.getLatitude(), lastLocation.getLongitude(),
                     spot.getLatitude(), spot.getLongitude(), distance);
             if (distance[0] <= NEARBY_RADIUS_METERS) items.add(new NearbyAdapter.Item(spot, distance[0]));
         }
-        Collections.sort(items, (a, b) -> Float.compare(a.meters, b.meters));
+        Collections.sort(items, nearbyComparator());
         if (items.size() > MAX_NEARBY_SPOTS) items = new ArrayList<>(items.subList(0, MAX_NEARBY_SPOTS));
 
         nearbyAdapter.setItems(items);
 
+        String title = nearbySort == SORT_POPULAR ? "Popular nearby"
+                : nearbySort == SORT_TOP_RATED ? "Top rated nearby" : "Nearby spots";
+        ((TextView) findViewById(R.id.nearby_title)).setText(title);
+
         String radius = AppSettings.formatRadius(this, NEARBY_RADIUS_METERS);
-        String subtitle = items.isEmpty()
-                ? "Nothing within " + radius + " yet"
-                : items.size() + (items.size() == 1 ? " place" : " places") + " within " + radius;
+        String subtitle;
+        if (items.isEmpty()) {
+            subtitle = nearbySort == SORT_TOP_RATED
+                    ? "No rated places within " + radius + " yet"
+                    : "Nothing within " + radius + " yet";
+        } else {
+            subtitle = items.size() + (items.size() == 1 ? " place" : " places") + " within " + radius;
+        }
         ((TextView) findViewById(R.id.nearby_subtitle)).setText(subtitle);
-        findViewById(R.id.nearby_empty).setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+
+        TextView empty = findViewById(R.id.nearby_empty);
+        empty.setText(nearbySort == SORT_TOP_RATED
+                ? "No rated places nearby yet. Open a place and leave the first rating!"
+                : "No spots nearby yet. Tap + to pin the first one!");
+        empty.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
         findViewById(R.id.nearby_list).setVisibility(items.isEmpty() ? View.GONE : View.VISIBLE);
+    }
+
+    /** Closest = nearest first. Popular = most likes. Top rated = best weighted rating. */
+    private Comparator<NearbyAdapter.Item> nearbyComparator() {
+        switch (nearbySort) {
+            case SORT_POPULAR:
+                return (a, b) -> {
+                    int byLikes = Integer.compare(b.spot.getLikes(), a.spot.getLikes());
+                    if (byLikes != 0) return byLikes;
+                    int byRating = Double.compare(b.spot.getRankingScore(), a.spot.getRankingScore());
+                    if (byRating != 0) return byRating;
+                    return Float.compare(a.meters, b.meters);
+                };
+            case SORT_TOP_RATED:
+                return (a, b) -> {
+                    int byRating = Double.compare(b.spot.getRankingScore(), a.spot.getRankingScore());
+                    if (byRating != 0) return byRating;
+                    int byCount = Integer.compare(b.spot.getRatingCount(), a.spot.getRatingCount());
+                    if (byCount != 0) return byCount;
+                    return Float.compare(a.meters, b.meters);
+                };
+            default:
+                return (a, b) -> Float.compare(a.meters, b.meters);
+        }
     }
 
     // ------------------------------------------------------------------ helpers

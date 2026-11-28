@@ -54,7 +54,9 @@ public class SpotListAdapter extends RecyclerView.Adapter<SpotListAdapter.VH> {
         Spot spot = spots.get(position);
         h.name.setText(spot.getName());
 
+        String rating = RatingUtils.label(spot);   // "★ 4.5 (12)" or ""
         String meta = Categories.normalize(spot.getCategory()).toUpperCase(Locale.ROOT)
+                + (rating.isEmpty() ? "" : "  ·  " + rating)
                 + "  ·  by @" + spot.getCreator();
         if (!spot.isPublic()) meta += "  ·  PRIVATE";
         if (statuses != null && spot.getId() != null && statuses.containsKey(spot.getId())) {

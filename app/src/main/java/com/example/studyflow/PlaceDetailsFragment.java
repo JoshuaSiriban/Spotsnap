@@ -13,6 +13,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.RatingBar;
+
+import java.text.DateFormat;
+import java.util.Date;
+import java.util.List;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -171,6 +178,7 @@ public class PlaceDetailsFragment extends Fragment {
         setupVisitToggle(view);
         setupFollowButton(view);
         setupCreatorLink(view);
+        setupRatingAndReviews(view);
 
         view.findViewById(R.id.btn_go).setOnClickListener(v -> openDirections());
     }
@@ -517,5 +525,193 @@ public class PlaceDetailsFragment extends Fragment {
                                 : "Unfollowed @" + spot.getCreator(), Toast.LENGTH_SHORT).show();
                     });
         });
+    }
+
+    // ---------------------------------------------------------------------
+    // Star ratings and reviews
+    // ---------------------------------------------------------------------
+
+    private Review myReview;   // the logged in user's own review of this spot (null = none yet)
+
+    private void setupRatingAndReviews(View root) {
+        showRatingSummary();
+        if (spot == null || spot.getId() == null) {
+            // old sample spots are not in the database, so they cannot have reviews
+            root.findViewById(R.id.reviews_section).setVisibility(View.GONE);
+            return;
+        }
+        root.findViewById(R.id.btn_write_review).setOnClickListener(v -> showReviewDialog());
+        loadReviews();
+    }
+
+    /** The stars and the average under the spot name, e.g. "★★★★☆  4.3 (12)". */
+    private void showRatingSummary() {
+        View root = getView();
+        if (root == null || spot == null) return;
+        ((TextView) root.findViewById(R.id.txt_rating_stars))
+                .setText(RatingUtils.stars(spot.getAverageRating()));
+        ((TextView) root.findViewById(R.id.txt_rating_text))
+                .setText(RatingUtils.summary(spot));
+    }
+
+    private void loadReviews() {
+        View root = getView();
+        if (root == null || spot == null || spot.getId() == null) return;
+
+        TextView status = root.findViewById(R.id.txt_reviews_status);
+        status.setText("Loading reviews...");
+        status.setVisibility(View.VISIBLE);
+
+        ReviewRepository.loadReviews(spot.getId(), list -> {
+            if (getView() == null) return; // the screen was closed while loading
+            showReviews(list);
+        }, message -> {
+            View r = getView();
+            if (r == null) return;
+            TextView s = r.findViewById(R.id.txt_reviews_status);
+            s.setText(message + " Check your internet connection.");
+            s.setVisibility(View.VISIBLE);
+        });
+    }
+
+    private void showReviews(List<Review> list) {
+        View root = getView();
+        if (root == null) return;
+
+        LinearLayout container = root.findViewById(R.id.reviews_container);
+        container.removeAllViews();
+        myReview = null;
+
+        String me = UserSession.getUid();
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM);
+
+        for (Review review : list) {
+            boolean mine = review.uid != null && review.uid.equals(me);
+            if (mine) myReview = review;
+
+            View row = inflater.inflate(R.layout.item_review, container, false);
+            ((TextView) row.findViewById(R.id.review_author))
+                    .setText("@" + review.username + (mine ? " (you)" : ""));
+            ((TextView) row.findViewById(R.id.review_stars))
+                    .setText(RatingUtils.stars(review.rating));
+
+            TextView text = row.findViewById(R.id.review_text);
+            if (review.text == null || review.text.isEmpty()) {
+                text.setVisibility(View.GONE);   // a rating without a written review
+            } else {
+                text.setText(review.text);
+            }
+
+            TextView date = row.findViewById(R.id.review_date);
+            if (review.createdAt > 0) {
+                date.setText(dateFormat.format(new Date(review.createdAt)));
+            } else {
+                date.setVisibility(View.GONE);
+            }
+            container.addView(row);
+        }
+
+        TextView status = root.findViewById(R.id.txt_reviews_status);
+        status.setText("No reviews yet. Be the first to share a recommendation!");
+        status.setVisibility(list.isEmpty() ? View.VISIBLE : View.GONE);
+
+        ((TextView) root.findViewById(R.id.txt_reviews_count))
+                .setText(list.size() + (list.size() == 1 ? " review" : " reviews"));
+
+        ((com.google.android.material.button.MaterialButton) root.findViewById(R.id.btn_write_review))
+                .setText(myReview == null ? "Write a review" : "Edit your review");
+    }
+
+    /** Dialog with the star bar and the text box. Used for writing and for editing. */
+    private void showReviewDialog() {
+        if (spot == null || spot.getId() == null) return;
+
+        View form = getLayoutInflater().inflate(R.layout.dialog_review, null);
+        RatingBar bar = form.findViewById(R.id.review_rating);
+        EditText input = form.findViewById(R.id.review_text);
+        if (myReview != null) {
+            bar.setRating(myReview.rating);
+            input.setText(myReview.text);
+        }
+
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(myReview == null ? "Write a review" : "Edit your review")
+                .setView(form)
+                .setPositiveButton("Save", null)      // set below so a mistake does not close the dialog
+                .setNegativeButton("Cancel", null);
+        if (myReview != null) builder.setNeutralButton("Delete", null);
+
+        androidx.appcompat.app.AlertDialog dialog = builder.create();
+        dialog.show();
+
+        dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            int stars = Math.round(bar.getRating());
+            if (stars < 1) {
+                toast("Tap the stars to give a rating first.");
+                return;
+            }
+            v.setEnabled(false);
+            String username = UserSession.getUsername(requireContext());
+            ReviewRepository.saveReview(spot, username, stars, input.getText().toString().trim(),
+                    new ReviewRepository.OnChanged() {
+                        @Override
+                        public void onDone(long ratingSumChange, int ratingCountChange) {
+                            dialog.dismiss();
+                            applyRatingChange(ratingSumChange, ratingCountChange);
+                            toast("Thanks! Your review was saved.");
+                        }
+
+                        @Override
+                        public void onError(String message) {
+                            v.setEnabled(true);
+                            toast(message);
+                        }
+                    });
+        });
+
+        if (myReview != null) {
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
+                dialog.dismiss();
+                confirmDeleteReview();
+            });
+        }
+    }
+
+    private void confirmDeleteReview() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Delete your review?")
+                .setMessage("Your rating and review will be removed from this place.")
+                .setPositiveButton("Delete", (d, which) ->
+                        ReviewRepository.deleteMyReview(spot, new ReviewRepository.OnChanged() {
+                            @Override
+                            public void onDone(long ratingSumChange, int ratingCountChange) {
+                                applyRatingChange(ratingSumChange, ratingCountChange);
+                                toast("Review deleted");
+                            }
+
+                            @Override
+                            public void onError(String message) {
+                                toast(message);
+                            }
+                        }))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /** Updates the numbers on this screen right away and reloads the list of reviews. */
+    private void applyRatingChange(long ratingSumChange, int ratingCountChange) {
+        if (spot != null) {
+            spot.setRating(spot.getRatingSum() + ratingSumChange,
+                    spot.getRatingCount() + ratingCountChange);
+        }
+        if (getView() == null) return;
+        showRatingSummary();
+        loadReviews();
+    }
+
+    private void toast(String message) {
+        android.content.Context context = getContext();
+        if (context != null) Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
     }
 }

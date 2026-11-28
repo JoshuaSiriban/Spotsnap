@@ -142,6 +142,50 @@
                         android:layout_height="1dp"
                         android:background="@color/line" />
 
+                    <!-- NEW: Closest / Popular / Top rated -->
+                    <HorizontalScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clipToPadding="false"
+                        android:paddingStart="20dp"
+                        android:paddingTop="8dp"
+                        android:paddingEnd="20dp"
+                        android:paddingBottom="4dp"
+                        android:scrollbars="none">
+
+                        <com.google.android.material.chip.ChipGroup
+                            android:id="@+id/nearby_sort_group"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:chipSpacingHorizontal="8dp"
+                            app:selectionRequired="true"
+                            app:singleLine="true"
+                            app:singleSelection="true">
+
+                            <com.google.android.material.chip.Chip
+                                android:id="@+id/sort_closest"
+                                style="@style/Widget.SpotSnap.Chip"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:checked="true"
+                                android:text="Closest" />
+
+                            <com.google.android.material.chip.Chip
+                                android:id="@+id/sort_popular"
+                                style="@style/Widget.SpotSnap.Chip"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Popular" />
+
+                            <com.google.android.material.chip.Chip
+                                android:id="@+id/sort_top_rated"
+                                style="@style/Widget.SpotSnap.Chip"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Top rated" />
+                        </com.google.android.material.chip.ChipGroup>
+                    </HorizontalScrollView>
+
                     <TextView
                         android:id="@+id/nearby_empty"
                         android:layout_width="match_parent"

@@ -64,7 +64,12 @@ public class NearbyAdapter extends RecyclerView.Adapter<NearbyAdapter.VH> {
         Spot spot = item.spot;
 
         h.name.setText(spot.getName());
-        h.meta.setText(spot.getCategory().toUpperCase(Locale.ROOT) + "  ·  " + AppSettings.formatDistance(h.itemView.getContext(), item.meters));
+        String meta = spot.getCategory().toUpperCase(Locale.ROOT) + "  ·  "
+                + AppSettings.formatDistance(h.itemView.getContext(), item.meters);
+        String rating = RatingUtils.label(spot);                 // "★ 4.5 (12)" or ""
+        if (!rating.isEmpty()) meta += "  ·  " + rating;
+        if (spot.getLikes() > 0) meta += "  ·  ♥ " + spot.getLikes();
+        h.meta.setText(meta);
         h.photo.setImageBitmap(previewOf(h.photo, spot)); // null keeps the grey placeholder
         h.itemView.setOnClickListener(v -> listener.onClick(spot));
     }
