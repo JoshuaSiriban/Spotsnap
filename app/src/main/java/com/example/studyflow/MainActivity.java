@@ -2,12 +2,15 @@ package com.example.studyflow;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -39,28 +42,35 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.maps.android.clustering.ClusterItem;
+import com.google.maps.android.clustering.ClusterManager;
+import com.google.maps.android.clustering.view.DefaultClusterRenderer;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
  * The map screen. Every public spot (plus the logged in user's private ones) comes live from
- * Firestore and is drawn as a marker. The six category chips filter the
- * markers, and the "my location" button centres the map on the user and lists nearby spots.
+ * Firestore and is drawn on the map. Spots that are close together are grouped into a numbered
+ * circle (a cluster). The category chips filter the spots, the layers button switches between the
+ * normal and the satellite map, and the "my location" button centres the map on the user and
+ * lists nearby spots.
  */
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -70,17 +80,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final float NEARBY_RADIUS_METERS = 5000f;
     private static final int MAX_NEARBY_SPOTS = 15;
 
+    // Sorting of the nearby list
     private static final int SORT_CLOSEST = 0;
-    private static final int SORT_POPULAR = 1;      // most likes first
-    private static final int SORT_TOP_RATED = 2;    // best rated first
+    private static final int SORT_NEWEST = 1;
+    private static final int SORT_POPULAR = 2;     // most liked
+    private static final int SORT_TOP_RATED = 3;   // best rated
     private int nearbySort = SORT_CLOSEST;
 
     private GoogleMap googleMap;
     private SpotRepository.Subscription spotSubscription; // live updates of the spots from Firestore
 
-    private final Map<String, Marker> markers = new HashMap<>();            // spot id -> marker
+    private final Map<String, Spot> allSpots = new LinkedHashMap<>();       // spot id -> spot (everything we know)
+    private final Map<String, SpotItem> clusterItems = new HashMap<>();     // spot id -> item given to the cluster manager
     private final Map<Integer, BitmapDescriptor> icons = new HashMap<>();   // marker picture -> icon
     private final Set<String> selectedCategories = new HashSet<>();         // lower case; empty = all
+    private ClusterManager<SpotItem> clusterManager;
+    private SpotRenderer spotRenderer;
+    private boolean satellite;                                              // map type: satellite or normal
+    private final Handler handler = new Handler(Looper.getMainLooper());
     private boolean loadErrorShown;
     private Set<String> focusIds;       // when not null, the map only shows these spots (by id)
     private boolean followingOnly;      // the "Following" chip is on: only spots of people you follow
@@ -90,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private boolean nearbyVisible;
     private NearbyAdapter nearbyAdapter;
     private BottomSheetBehavior<View> nearbySheet;   // the slide-up list of nearby spots
-    private View mapButtons;                         // my location / crosshair / add buttons
+    private View mapButtons;                         // map type / my location / crosshair / add buttons
     private OnBackPressedCallback collapseSheetOnBack;
 
     private final ActivityResultLauncher<String[]> locationPermissionLauncher =
@@ -138,6 +155,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         findViewById(R.id.btn_clear_focus).setOnClickListener(v -> clearFocus());
         setupNearbySheet();
         findViewById(R.id.btn_my_location).setOnClickListener(v -> onMyLocationClicked());
+        findViewById(R.id.btn_map_type).setOnClickListener(v -> toggleMapType());
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -273,13 +291,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         findViewById(R.id.btn_close_nearby).setOnClickListener(v ->
                 nearbySheet.setState(BottomSheetBehavior.STATE_HIDDEN));
 
-        // Closest / Popular / Top rated
+        // Closest / Newest / Most liked / Top rated
         ChipGroup sortGroup = findViewById(R.id.nearby_sort_group);
         sortGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
             if (checkedIds.isEmpty()) return;
             int id = checkedIds.get(0);
-            nearbySort = id == R.id.sort_popular ? SORT_POPULAR
-                    : id == R.id.sort_top_rated ? SORT_TOP_RATED : SORT_CLOSEST;
+            nearbySort = id == R.id.sort_newest ? SORT_NEWEST
+                    : id == R.id.sort_popular ? SORT_POPULAR
+                      : id == R.id.sort_top_rated ? SORT_TOP_RATED : SORT_CLOSEST;
             refreshNearby();
         });
     }
@@ -330,6 +349,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        handler.removeCallbacksAndMessages(null);
         if (spotSubscription != null) spotSubscription.remove(); // stop listening to Firestore
     }
 
@@ -343,62 +363,161 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         if (hasLocationPermission()) enableMyLocationDot();
 
-        map.setOnMarkerClickListener(marker -> {
-            Object tag = marker.getTag();
-            if (tag instanceof Spot) openDetails((Spot) tag);
+        satellite = AppSettings.useSatellite(this);
+        applyMapType();
+
+        // Spots that are close together are grouped into one numbered circle
+        clusterManager = new ClusterManager<>(this, map);
+        spotRenderer = new SpotRenderer(this, map, clusterManager);
+        clusterManager.setRenderer(spotRenderer);
+        clusterManager.setOnClusterItemClickListener(item -> {
+            Spot latest = allSpots.get(item.spot.getId());   // the newest data (likes, ratings...)
+            openDetails(latest != null ? latest : item.spot);
             return true;
         });
+        clusterManager.setOnClusterClickListener(cluster -> {
+            // tap a circle: zoom in so the spots inside it spread out
+            LatLngBounds.Builder bounds = new LatLngBounds.Builder();
+            for (SpotItem item : cluster.getItems()) bounds.include(item.getPosition());
+            try {
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 150));
+            } catch (IllegalStateException e) {
+                googleMap.animateCamera(CameraUpdateFactory.zoomIn());
+            }
+            return true;
+        });
+        map.setOnCameraIdleListener(clusterManager);
+        map.setOnMarkerClickListener(clusterManager);
 
         // The listener runs again whenever a spot is added, changed or deleted,
         // so the map always matches the database.
         spotSubscription = SpotRepository.listenToSpots(this, this::showSpots, this::onSpotsError);
     }
 
-    /** Makes the markers match the given spots: add new ones, update changed, remove gone. */
+    // -------------------------------------------------------------- map type
+
+    private void toggleMapType() {
+        if (googleMap == null) return;
+        satellite = !satellite;
+        AppSettings.setUseSatellite(this, satellite);
+        applyMapType();
+        Toast.makeText(this, satellite ? "Satellite view" : "Map view", Toast.LENGTH_SHORT).show();
+    }
+
+    /** Satellite uses the "hybrid" type, which keeps the street and place labels on top. */
+    private void applyMapType() {
+        if (googleMap == null) return;
+        googleMap.setMapType(satellite ? GoogleMap.MAP_TYPE_HYBRID : GoogleMap.MAP_TYPE_NORMAL);
+    }
+
+    // -------------------------------------------------------------- clustering
+
+    /** One spot as the cluster manager sees it. */
+    private static class SpotItem implements ClusterItem {
+        final Spot spot;
+        private final LatLng position;
+        private final String snippet;   // "★ 4.5 (12)" shown in the name bubble, or null
+
+        SpotItem(Spot spot) {
+            this.spot = spot;
+            this.position = new LatLng(spot.getLatitude(), spot.getLongitude());
+            String label = RatingUtils.label(spot);
+            this.snippet = label.isEmpty() ? null : label;
+        }
+
+        @NonNull
+        @Override
+        public LatLng getPosition() {
+            return position;
+        }
+
+        @Nullable
+        @Override
+        public String getTitle() {
+            return spot.getName();
+        }
+
+        @Nullable
+        @Override
+        public String getSnippet() {
+            return snippet;
+        }
+
+        @Nullable
+        public Float getZIndex() {
+            return null;
+        }
+
+        // Two items that look the same are "equal", so the map keeps their marker
+        // instead of removing and drawing it again every time Firestore sends an update.
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (!(other instanceof SpotItem)) return false;
+            SpotItem o = (SpotItem) other;
+            return Objects.equals(spot.getId(), o.spot.getId())
+                    && position.equals(o.position)
+                    && Objects.equals(spot.getName(), o.spot.getName())
+                    && Objects.equals(spot.getCategory(), o.spot.getCategory())
+                    && Objects.equals(snippet, o.snippet);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(spot.getId(), position, spot.getName(), spot.getCategory(), snippet);
+        }
+    }
+
+    /** Draws single spots with the category pictures. Groups use the default numbered circle. */
+    private class SpotRenderer extends DefaultClusterRenderer<SpotItem> {
+
+        SpotRenderer(Context context, GoogleMap map, ClusterManager<SpotItem> manager) {
+            super(context, map, manager);
+        }
+
+        @Override
+        protected void onBeforeClusterItemRendered(@NonNull SpotItem item, @NonNull MarkerOptions options) {
+            options.icon(iconFor(item.spot.getCategory()))
+                    .title(item.getTitle())
+                    .snippet(item.getSnippet());
+        }
+
+        @Override
+        protected void onClusterItemUpdated(@NonNull SpotItem item, @NonNull Marker marker) {
+            marker.setIcon(iconFor(item.spot.getCategory()));
+            marker.setTitle(item.getTitle());
+            marker.setSnippet(item.getSnippet());
+        }
+    }
+
+    /** Gives the cluster manager the spots that pass the filters, and lets it regroup them. */
+    private void rebuildClusters() {
+        if (clusterManager == null) return;
+        clusterManager.clearItems();
+        clusterItems.clear();
+        for (Spot spot : allSpots.values()) {
+            if (!matchesFilter(spot)) continue;
+            SpotItem item = new SpotItem(spot);
+            clusterItems.put(spot.getId(), item);
+            clusterManager.addItem(item);
+        }
+        clusterManager.cluster();
+    }
+
+    /** Remembers the given spots (new, changed or gone) and redraws the map. */
     private void showSpots(ArrayList<Spot> spots) {
         loadErrorShown = false;
         Set<String> currentIds = new HashSet<>();
-
         for (Spot spot : spots) {
             if (spot.getId() == null) continue;
             currentIds.add(spot.getId());
-
-            LatLng position = new LatLng(spot.getLatitude(), spot.getLongitude());
-            Marker marker = markers.get(spot.getId());
-            if (marker == null) {
-                marker = googleMap.addMarker(new MarkerOptions()
-                        .position(position)
-                        .title(spot.getName())
-                        .snippet(ratingSnippet(spot))
-                        .icon(iconFor(spot.getCategory())));
-                if (marker == null) continue;
-                markers.put(spot.getId(), marker);
-            } else {
-                marker.setPosition(position);
-                marker.setTitle(spot.getName());
-                marker.setSnippet(ratingSnippet(spot));
-                marker.setIcon(iconFor(spot.getCategory()));
-            }
-            marker.setTag(spot);
-            marker.setVisible(matchesFilter(spot));
+            allSpots.put(spot.getId(), spot);
         }
+        // Forget the spots that were deleted or made private
+        allSpots.keySet().retainAll(currentIds);
 
-        // Remove the markers of spots that were deleted or made private
-        Iterator<Map.Entry<String, Marker>> iterator = markers.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<String, Marker> entry = iterator.next();
-            if (!currentIds.contains(entry.getKey())) {
-                entry.getValue().remove();
-                iterator.remove();
-            }
-        }
+        rebuildClusters();
         refreshNearby();
-    }
-
-    /** "★ 4.5 (12)" shown under the name in the marker bubble, or null when there are no ratings. */
-    private String ratingSnippet(Spot spot) {
-        String label = RatingUtils.label(spot);
-        return label.isEmpty() ? null : label;
     }
 
     private void onSpotsError(String message) {
@@ -429,11 +548,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
                 new LatLng(spot.getLatitude(), spot.getLongitude()), LOCATION_ZOOM + 2));
-        Marker marker = markers.get(spot.getId());
-        if (marker != null) {
-            marker.setVisible(true);
-            marker.showInfoWindow();
-        }
+
+        // Once the map has zoomed in (and the cluster has opened up), show the name bubble
+        final String id = spot.getId();
+        handler.postDelayed(() -> showBubble(id), 1000);
+    }
+
+    private void showBubble(String spotId) {
+        if (spotId == null || spotRenderer == null) return;
+        SpotItem item = clusterItems.get(spotId);
+        if (item == null) return;
+        Marker marker = spotRenderer.getMarker(item);
+        if (marker != null) marker.showInfoWindow();
     }
 
     /** Leaves any open screen and makes the map show only these spots, zoomed to fit them. */
@@ -443,8 +569,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         ((ChipGroup) findViewById(R.id.filter_group)).clearCheck();
 
         focusIds = new HashSet<>();
-        com.google.android.gms.maps.model.LatLngBounds.Builder bounds =
-                new com.google.android.gms.maps.model.LatLngBounds.Builder();
+        LatLngBounds.Builder bounds = new LatLngBounds.Builder();
         for (Spot spot : spots) {
             focusIds.add(spot.getId());
             bounds.include(new LatLng(spot.getLatitude(), spot.getLongitude()));
@@ -483,10 +608,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void applyFilter() {
-        for (Marker marker : markers.values()) {
-            Object tag = marker.getTag();
-            if (tag instanceof Spot) marker.setVisible(matchesFilter((Spot) tag));
-        }
+        rebuildClusters();
         refreshNearby();
     }
 
@@ -601,17 +723,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 new LatLng(location.getLatitude(), location.getLongitude()), LOCATION_ZOOM));
     }
 
-    /** Rebuilds the nearby list: visible spots within the radius, closest first. */
     /** Rebuilds the nearby list: visible spots within the radius, sorted by the chosen chip. */
     private void refreshNearby() {
         if (!nearbyVisible || lastLocation == null) return;
 
         List<NearbyAdapter.Item> items = new ArrayList<>();
         float[] distance = new float[1];
-        for (Marker marker : markers.values()) {
-            Object tag = marker.getTag();
-            if (!(tag instanceof Spot)) continue;
-            Spot spot = (Spot) tag;
+        for (Spot spot : allSpots.values()) {
             if (!matchesFilter(spot)) continue;
             if (nearbySort == SORT_TOP_RATED && !spot.hasRatings()) continue;   // nothing to rank yet
 
@@ -624,8 +742,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         nearbyAdapter.setItems(items);
 
-        String title = nearbySort == SORT_POPULAR ? "Popular nearby"
-                : nearbySort == SORT_TOP_RATED ? "Top rated nearby" : "Nearby spots";
+        String title = nearbySort == SORT_NEWEST ? "Newest nearby"
+                : nearbySort == SORT_POPULAR ? "Popular nearby"
+                  : nearbySort == SORT_TOP_RATED ? "Top rated nearby" : "Nearby spots";
         ((TextView) findViewById(R.id.nearby_title)).setText(title);
 
         String radius = AppSettings.formatRadius(this, NEARBY_RADIUS_METERS);
@@ -647,9 +766,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         findViewById(R.id.nearby_list).setVisibility(items.isEmpty() ? View.GONE : View.VISIBLE);
     }
 
-    /** Closest = nearest first. Popular = most likes. Top rated = best weighted rating. */
+    /** Closest = nearest first. Newest = recently pinned. Most liked = most likes. Top rated = best weighted rating. */
     private Comparator<NearbyAdapter.Item> nearbyComparator() {
         switch (nearbySort) {
+            case SORT_NEWEST:
+                return (a, b) -> {
+                    int byDate = Long.compare(b.spot.getCreatedAt(), a.spot.getCreatedAt());
+                    return byDate != 0 ? byDate : Float.compare(a.meters, b.meters);
+                };
             case SORT_POPULAR:
                 return (a, b) -> {
                     int byLikes = Integer.compare(b.spot.getLikes(), a.spot.getLikes());

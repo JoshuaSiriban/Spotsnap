@@ -46,6 +46,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -57,7 +58,7 @@ public class AddSpotFragment extends Fragment {
     private static final int FULL_QUALITY = 75;
     private static final int THUMB_SIDE = 240;
     private static final long SAVE_TIMEOUT_MS = 20000;
-
+    private static final long DUPLICATE_CHECK_TIMEOUT_MS = 6000;
     private static final double DEFAULT_LAT = 14.5995;
     private static final double DEFAULT_LNG = 120.9842;
 
@@ -463,6 +464,70 @@ public class AddSpotFragment extends Fragment {
             saveEdit(name, review, category, isPublic, photosToSave);
             return;
         }
+        // A new post: first check that the place is not already pinned
+        checkForDuplicatesThenSave(name, review, category, isPublic, photosToSave);
+    }
+
+    /**
+     * Looks for a place with a similar name close to this pin. If there is one, asks the person
+     * (they can open it, or pin anyway). If the check cannot finish in a few seconds (for example
+     * offline), the spot is simply saved, so adding a place is never blocked.
+     */
+    private void checkForDuplicatesThenSave(String name, String review, String category,
+                                            boolean isPublic, ArrayList<Photo> photosToSave) {
+        setSaving(true);   // shows "Saving..." and stops double taps while we check
+
+        boolean[] answered = {false};
+        Runnable giveUp = () -> {
+            if (answered[0]) return;
+            answered[0] = true;
+            if (!isAdded()) return;
+            saveNewSpot(name, review, category, isPublic, photosToSave);
+        };
+        mainHandler.postDelayed(giveUp, DUPLICATE_CHECK_TIMEOUT_MS);
+
+        SpotRepository.loadVisibleSpots(requireContext(), existing -> {
+            if (answered[0]) return;
+            answered[0] = true;
+            mainHandler.removeCallbacks(giveUp);
+            if (!isAdded() || getView() == null) return;
+
+            List<DuplicateFinder.Match> matches = DuplicateFinder.find(existing, name, latitude, longitude);
+            if (matches.isEmpty()) {
+                saveNewSpot(name, review, category, isPublic, photosToSave);
+            } else {
+                setSaving(false);
+                showDuplicateDialog(matches, () ->
+                        saveNewSpot(name, review, category, isPublic, photosToSave));
+            }
+        }, message -> {
+            if (answered[0]) return;
+            answered[0] = true;
+            mainHandler.removeCallbacks(giveUp);
+            if (!isAdded() || getView() == null) return;
+            saveNewSpot(name, review, category, isPublic, photosToSave);   // could not check: do not block
+        });
+    }
+
+    private void showDuplicateDialog(List<DuplicateFinder.Match> matches, Runnable pinAnyway) {
+        String[] labels = new String[matches.size()];
+        for (int i = 0; i < labels.length; i++) {
+            DuplicateFinder.Match match = matches.get(i);
+            labels[i] = match.spot.getName() + "  ·  "
+                    + AppSettings.formatDistance(requireContext(), match.meters) + " away";
+        }
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Similar places nearby (tap to view)")
+                .setItems(labels, (dialog, which) ->
+                        PlaceDetailsFragment.open(requireActivity(), matches.get(which).spot))
+                .setPositiveButton("Pin it anyway", (dialog, which) -> pinAnyway.run())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /** Saves a brand new post to Firestore, then shows it. */
+    private void saveNewSpot(String name, String review, String category, boolean isPublic,
+                             ArrayList<Photo> photosToSave) {
         Spot spot = new Spot(name, UserSession.getUsername(requireContext()), review, category,
                 latitude, longitude, photosToSave, 0, 0);
         spot.setCreatorId(UserSession.getUid());
@@ -516,7 +581,7 @@ public class AddSpotFragment extends Fragment {
         updated.setPublic(isPublic);
         updated.setPhotoCount(photosToSave.size());
         updated.setThumbnail(photosToSave.get(0).thumb);
-
+        updated.setRating(editingSpot.getRatingSum(), editingSpot.getRatingCount());
         setSaving(true);
         FragmentActivity activity = requireActivity();
         Context appContext = requireContext().getApplicationContext();

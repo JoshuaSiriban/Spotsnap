@@ -72,4 +72,6 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("androidx.exifinterface:exifinterface:1.3.7")
+    implementation("com.google.maps.android:android-maps-utils:3.10.0")
+    implementation("androidx.viewpager2:viewpager2:1.1.0")
 }

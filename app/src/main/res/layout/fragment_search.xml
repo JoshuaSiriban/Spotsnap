@@ -107,6 +107,89 @@
         </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>
 
+    <!-- NEW: sort the places -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="14dp"
+        android:letterSpacing="0.1"
+        android:text="SORT BY"
+        android:textColor="@color/muted_dark"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:clipToPadding="false"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:scrollbars="none">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/search_sort_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:chipSpacingHorizontal="8dp"
+            app:selectionRequired="true"
+            app:singleLine="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.chip.Chip android:id="@+id/search_sort_best" style="@style/Widget.SpotSnap.Chip" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" android:text="Best match"/>
+            <com.google.android.material.chip.Chip android:id="@+id/search_sort_newest" style="@style/Widget.SpotSnap.Chip" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Newest"/>
+            <com.google.android.material.chip.Chip android:id="@+id/search_sort_liked" style="@style/Widget.SpotSnap.Chip" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Most liked"/>
+            <com.google.android.material.chip.Chip android:id="@+id/search_sort_closest" style="@style/Widget.SpotSnap.Chip" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Closest"/>
+        </com.google.android.material.chip.ChipGroup>
+    </HorizontalScrollView>
+
+    <!-- NEW: recent searches (only shown while nothing is typed) -->
+    <LinearLayout
+        android:id="@+id/recent_section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="24dp"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:letterSpacing="0.1"
+                android:text="RECENT SEARCHES"
+                android:textColor="@color/muted_dark"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/recent_clear"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:padding="8dp"
+                android:text="Clear"
+                android:textColor="@color/coral"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/recent_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </LinearLayout>
+
     <TextView
         android:id="@+id/search_status"
         android:layout_width="match_parent"

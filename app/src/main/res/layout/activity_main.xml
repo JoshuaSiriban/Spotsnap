@@ -142,7 +142,7 @@
                         android:layout_height="1dp"
                         android:background="@color/line" />
 
-                    <!-- NEW: Closest / Popular / Top rated -->
+                    <!-- Closest / Newest / Most liked / Top rated -->
                     <HorizontalScrollView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -171,11 +171,18 @@
                                 android:text="Closest" />
 
                             <com.google.android.material.chip.Chip
+                                android:id="@+id/sort_newest"
+                                style="@style/Widget.SpotSnap.Chip"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Newest" />
+
+                            <com.google.android.material.chip.Chip
                                 android:id="@+id/sort_popular"
                                 style="@style/Widget.SpotSnap.Chip"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Popular" />
+                                android:text="Most liked" />
 
                             <com.google.android.material.chip.Chip
                                 android:id="@+id/sort_top_rated"
@@ -216,6 +223,19 @@
                 android:layout_marginBottom="24dp"
                 android:gravity="end"
                 android:orientation="vertical">
+
+                <ImageButton
+                    android:id="@+id/btn_map_type"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_marginBottom="8dp"
+                    android:background="@drawable/bg_badge"
+                    android:contentDescription="Switch between map and satellite view"
+                    android:elevation="6dp"
+                    android:padding="14dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_layers"
+                    app:tint="@color/ink" />
 
                 <ImageButton
                     android:id="@+id/btn_my_location"

@@ -150,6 +150,7 @@ public class PlaceDetailsFragment extends Fragment {
         rv.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
         PolaroidAdapter adapter = new PolaroidAdapter(spot != null ? spot.images : new java.util.ArrayList<Photo>());
         rv.setAdapter(adapter);
+        adapter.setOnPhotoClick(index -> openPhotoViewer(index));
 
         // Spots from the database only carry a small thumbnail, so load their pictures now
         TextView status = view.findViewById(R.id.txt_photos_status);
@@ -793,5 +794,11 @@ public class PlaceDetailsFragment extends Fragment {
                         }
                     });
         });
+    }
+
+    /** Opens the full screen photo viewer (swipe + pinch to zoom) on the tapped photo. */
+    private void openPhotoViewer(int index) {
+        if (spot == null || spot.images == null || spot.images.isEmpty()) return;
+        PhotoViewerFragment.open(requireActivity(), spot.images, index);
     }
 }

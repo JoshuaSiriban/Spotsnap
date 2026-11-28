@@ -18,6 +18,8 @@ public final class AppSettings {
 
     private static final float METERS_PER_MILE = 1609.344f;
 
+    private static final String KEY_SATELLITE = "map_satellite";
+
     private AppSettings() {}
 
     private static SharedPreferences prefs(Context context) {
@@ -53,6 +55,17 @@ public final class AppSettings {
             return Math.round(meters / METERS_PER_MILE) + " mi";
         }
         return Math.round(meters / 1000f) + " km";
+    }
+
+    // --------------------------------------------------------------- map type
+
+    /** true = satellite view, false = normal map. */
+    public static boolean useSatellite(Context context) {
+        return prefs(context).getBoolean(KEY_SATELLITE, false);
+    }
+
+    public static void setUseSatellite(Context context, boolean satellite) {
+        prefs(context).edit().putBoolean(KEY_SATELLITE, satellite).apply();
     }
 
     // ---------------------------------------------------------------- privacy

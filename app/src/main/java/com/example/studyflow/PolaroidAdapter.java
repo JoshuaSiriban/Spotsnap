@@ -14,11 +14,22 @@ import java.util.ArrayList;
 
 public class PolaroidAdapter extends RecyclerView.Adapter<PolaroidAdapter.VH> {
 
+    /** Called when a photo is tapped. {@code index} is its place in the list. */
+    public interface OnPhotoClick {
+        void onClick(int index);
+    }
+
     private ArrayList<Photo> photos;
+    private OnPhotoClick onPhotoClick;
 
     public PolaroidAdapter(ArrayList<Photo> photos)
     {
         this.photos = photos;
+    }
+
+    public void setOnPhotoClick(OnPhotoClick listener)
+    {
+        this.onPhotoClick = listener;
     }
 
     /** Replaces the photos, for example after they finished loading from Firestore. */
@@ -52,6 +63,12 @@ public class PolaroidAdapter extends RecyclerView.Adapter<PolaroidAdapter.VH> {
         h.photo.setContentDescription(photo.caption == null || photo.caption.isEmpty() ? "Photo" : photo.caption);
 
         h.itemView.setRotation(position % 2 == 0 ? -2f : 2f);
+
+        // Tap a photo to see it full screen
+        h.itemView.setOnClickListener(v -> {
+            int index = h.getBindingAdapterPosition();
+            if (index != RecyclerView.NO_POSITION && onPhotoClick != null) onPhotoClick.onClick(index);
+        });
     }
 
     @Override
