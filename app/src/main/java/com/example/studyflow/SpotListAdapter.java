@@ -25,9 +25,15 @@ public class SpotListAdapter extends RecyclerView.Adapter<SpotListAdapter.VH> {
 
     private final List<Spot> spots = new ArrayList<>();
     private final Listener listener;
+    private java.util.Map<String, String> statuses;   // null = do not show a status
 
     public SpotListAdapter(Listener listener) {
         this.listener = listener;
+    }
+
+    /** Optional: spot id -> "want" / "visited". Saved places then show it after the category. */
+    public void setStatuses(java.util.Map<String, String> newStatuses) {
+        statuses = newStatuses;
     }
 
     public void setSpots(List<Spot> newSpots) {
@@ -51,6 +57,10 @@ public class SpotListAdapter extends RecyclerView.Adapter<SpotListAdapter.VH> {
         String meta = Categories.normalize(spot.getCategory()).toUpperCase(Locale.ROOT)
                 + "  ·  by @" + spot.getCreator();
         if (!spot.isPublic()) meta += "  ·  PRIVATE";
+        if (statuses != null && spot.getId() != null && statuses.containsKey(spot.getId())) {
+            meta += SavedRepository.STATUS_VISITED.equals(statuses.get(spot.getId()))
+                    ? "  ·  VISITED" : "  ·  WANT TO GO";
+        }
         h.meta.setText(meta);
 
         h.photo.setImageBitmap(previewOf(h.photo, spot)); // null keeps the grey placeholder

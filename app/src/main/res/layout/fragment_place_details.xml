@@ -52,6 +52,49 @@
         </LinearLayout>
     </ScrollView>
 
+    <!-- Only shown while the place is saved -->
+    <LinearLayout
+        android:id="@+id/visit_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/cream"
+        android:paddingStart="24dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="10dp"
+        android:visibility="gone">
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/visit_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_want"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="Want to go"
+                android:textColor="@color/ink"
+                app:backgroundTint="@color/visit_btn_bg"
+                app:strokeColor="@color/ink" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_visited"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="Visited"
+                android:textColor="@color/ink"
+                app:backgroundTint="@color/visit_btn_bg"
+                app:strokeColor="@color/ink" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+    </LinearLayout>
+
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:padding="14dp" android:background="@drawable/bg_card_ink">
         <ImageButton android:id="@+id/btn_like" android:layout_width="56dp" android:layout_height="56dp" android:background="@drawable/bg_round_btn" android:contentDescription="Like" android:src="@drawable/ic_heart" app:tint="@color/icon_toggle"/>
         <ImageButton android:id="@+id/btn_save" android:layout_width="56dp" android:layout_height="56dp" android:layout_marginStart="10dp" android:background="@drawable/bg_round_btn" android:contentDescription="Save" android:src="@drawable/ic_bookmark" app:tint="@color/icon_toggle"/>

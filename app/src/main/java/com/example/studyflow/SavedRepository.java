@@ -21,7 +21,7 @@ import java.util.function.Consumer;
 /**
  * The places a user saved.
  *
- *   users/{uid}/saved/{spotId}   { spotId, savedAt }
+ *   users/{uid}/saved/{spotId}   { spotId, savedAt, status }   status = "want" or "visited"
  *
  * Only the id is stored, so a saved place always shows the latest name, category and photos.
  * Saving or unsaving also adds or removes 1 from the "saves" counter of the spot, in the same
@@ -30,6 +30,11 @@ import java.util.function.Consumer;
 public final class SavedRepository {
 
     private static final String TAG = "SavedRepository";
+
+    /** A saved place the person would like to visit. Places saved before this existed count as this. */
+    public static final String STATUS_WANT = "want";
+    /** A saved place the person has been to. */
+    public static final String STATUS_VISITED = "visited";
 
     private SavedRepository() {}
 
@@ -72,6 +77,7 @@ public final class SavedRepository {
                         Map<String, Object> data = new HashMap<>();
                         data.put("spotId", spot.getId());
                         data.put("savedAt", FieldValue.serverTimestamp());
+                        data.put("status", STATUS_WANT);
                         transaction.set(ref, data);
                         transaction.update(spotRef, "saves", FieldValue.increment(1));
                     } else if (!save && exists) {
@@ -132,6 +138,60 @@ public final class SavedRepository {
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Could not load saved places", e);
+                    if (onError != null) onError.accept("Could not load your saved places.");
+                });
+    }
+
+    // ------------------------------------------------------- visited / want to go
+
+    /** Anything that is not "visited" (including a missing value) means "want". */
+    public static String statusOf(@Nullable String stored) {
+        return STATUS_VISITED.equals(stored) ? STATUS_VISITED : STATUS_WANT;
+    }
+
+    /** Calls back with the status of a saved spot, or null when the spot is not saved. */
+    public static void getStatus(String spotId, Consumer<String> callback) {
+        if (!UserSession.isLoggedIn() || spotId == null) {
+            callback.accept(null);
+            return;
+        }
+        savedRef(spotId).get()
+                .addOnSuccessListener(doc -> callback.accept(
+                        doc.exists() ? statusOf(doc.getString("status")) : null))
+                .addOnFailureListener(e -> callback.accept(null));
+    }
+
+    /** Marks a saved spot as visited or want to go. Calls back with an error message, or null when it worked. */
+    public static void setStatus(String spotId, String status, Consumer<String> callback) {
+        if (!UserSession.isLoggedIn() || spotId == null) {
+            callback.accept("You need to be logged in to do this.");
+            return;
+        }
+        savedRef(spotId).update("status", statusOf(status))
+                .addOnSuccessListener(unused -> callback.accept(null))
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Could not change the status", e);
+                    callback.accept("Could not update. Check your internet connection.");
+                });
+    }
+
+    /** The status of every saved spot: spot id -> "want" / "visited". */
+    public static void loadStatuses(Consumer<Map<String, String>> callback, @Nullable Consumer<String> onError) {
+        Map<String, String> result = new HashMap<>();
+        if (!UserSession.isLoggedIn()) {
+            callback.accept(result);
+            return;
+        }
+        db().collection("users").document(UserSession.getUid()).collection("saved").get()
+                .addOnSuccessListener(snapshot -> {
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        String spotId = doc.getString("spotId") != null ? doc.getString("spotId") : doc.getId();
+                        result.put(spotId, statusOf(doc.getString("status")));
+                    }
+                    callback.accept(result);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Could not load the statuses", e);
                     if (onError != null) onError.accept("Could not load your saved places.");
                 });
     }

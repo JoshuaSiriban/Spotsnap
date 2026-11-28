@@ -168,6 +168,7 @@ public class PlaceDetailsFragment extends Fragment {
 
         setupLikeButton(view);
         setupSaveButton(view);
+        setupVisitToggle(view);
         setupFollowButton(view);
         setupCreatorLink(view);
 
@@ -353,8 +354,46 @@ public class PlaceDetailsFragment extends Fragment {
         });
     }
 
-    /** The bookmark button: shows whether the spot is saved and saves / unsaves it. */
-    private void setupSaveButton(View root) {
+    // ---------------------------------------------------- visited / want to go
+
+    private boolean updatingVisitRow;   // true while we select a button ourselves (not the person)
+
+    /** Shows the "Want to go | Visited" buttons while the spot is saved; {@code status} null = not saved. */
+    private void showVisitRow(@Nullable String status) {
+        View root = getView();
+        if (root == null) return;
+        root.findViewById(R.id.visit_row).setVisibility(status == null ? View.GONE : View.VISIBLE);
+        if (status == null) return;
+
+        com.google.android.material.button.MaterialButtonToggleGroup group = root.findViewById(R.id.visit_group);
+        updatingVisitRow = true;
+        group.check(SavedRepository.STATUS_VISITED.equals(status) ? R.id.btn_visited : R.id.btn_want);
+        updatingVisitRow = false;
+    }
+
+    private void setupVisitToggle(View root) {
+        if (spot == null || spot.getId() == null) return;
+        com.google.android.material.button.MaterialButtonToggleGroup group = root.findViewById(R.id.visit_group);
+        group.addOnButtonCheckedListener((g, checkedId, isChecked) -> {
+            if (!isChecked || updatingVisitRow) return;
+            String status = checkedId == R.id.btn_visited
+                    ? SavedRepository.STATUS_VISITED : SavedRepository.STATUS_WANT;
+            SavedRepository.setStatus(spot.getId(), status, error -> {
+                if (getView() == null) return;
+                if (error != null) {
+                    Toast.makeText(requireContext(), error, Toast.LENGTH_LONG).show();
+                    // put the buttons back to what is really saved
+                    SavedRepository.getStatus(spot.getId(), this::showVisitRow);
+                    return;
+                }
+                Toast.makeText(requireContext(),
+                        SavedRepository.STATUS_VISITED.equals(status) ? "Marked as visited" : "Marked as want to go",
+                        Toast.LENGTH_SHORT).show();
+            });
+        });
+    }
+
+    /** The bookmark button: shows whether the spot is saved and saves / unsaves it. */    private void setupSaveButton(View root) {
         View saveButton = root.findViewById(R.id.btn_save);
         if (spot == null || spot.getId() == null) {
             // old sample spots are not in the database, so they cannot be saved
@@ -364,10 +403,11 @@ public class PlaceDetailsFragment extends Fragment {
         }
 
         saveButton.setEnabled(false); // until we know the current state
-        SavedRepository.isSaved(spot.getId(), saved -> {
+        SavedRepository.getStatus(spot.getId(), status -> {   // null = not saved
             if (getView() == null) return;
-            saveButton.setSelected(saved);
+            saveButton.setSelected(status != null);
             saveButton.setEnabled(true);
+            showVisitRow(status);
         });
 
         saveButton.setOnClickListener(v -> {
@@ -381,6 +421,7 @@ public class PlaceDetailsFragment extends Fragment {
                     return;
                 }
                 v.setSelected(save);
+                showVisitRow(save ? SavedRepository.STATUS_WANT : null);
                 spot.setSaves(Math.max(0, spot.getSaves() + (save ? 1 : -1)));
                 ((TextView) getView().findViewById(R.id.savesCount)).setText(String.valueOf(spot.getSaves()));
                 Toast.makeText(requireContext(), save ? "Saved to your places" : "Removed from saved",
