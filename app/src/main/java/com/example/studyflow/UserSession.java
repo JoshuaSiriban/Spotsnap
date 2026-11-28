@@ -2,7 +2,8 @@ package com.example.studyflow;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-
+import android.util.Base64;
+import androidx.annotation.Nullable;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -19,6 +20,8 @@ public final class UserSession {
     private static final String KEY_UID = "uid";
     private static final String KEY_USERNAME = "username";
     private static final String KEY_FULL_NAME = "fullName";
+    private static final String KEY_BIO = "bio";
+    private static final String KEY_PHOTO = "photo";   // the profile picture, as Base64 text
 
     private UserSession() {}
 
@@ -70,6 +73,32 @@ public final class UserSession {
             if (!fullName.isEmpty()) return fullName;
         }
         return getUsername(context);
+    }
+
+    /** The short bio of the logged in user ("" when there is none). */
+    public static String getBio(Context context) {
+        return hasProfile(context) ? prefs(context).getString(KEY_BIO, "") : "";
+    }
+
+    /** The profile picture of the logged in user (a small JPEG), or null when there is none. */
+    @Nullable
+    public static byte[] getPhoto(Context context) {
+        if (!hasProfile(context)) return null;
+        String text = prefs(context).getString(KEY_PHOTO, "");
+        if (text.isEmpty()) return null;
+        try {
+            return Base64.decode(text, Base64.NO_WRAP);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    /** Keeps a copy of the bio and picture on this phone so screens can show them at once. */
+    public static void saveExtras(Context context, @Nullable String bio, @Nullable byte[] photo) {
+        prefs(context).edit()
+                .putString(KEY_BIO, bio == null ? "" : bio)
+                .putString(KEY_PHOTO, photo == null ? "" : Base64.encodeToString(photo, Base64.NO_WRAP))
+                .apply();
     }
 
     static void save(Context context, String uid, String username, String fullName) {

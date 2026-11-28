@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -12,6 +13,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 
 import java.util.ArrayList;
@@ -19,8 +21,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * The Activity Feed: the most recent public posts from other people, newest first.
- * "Everyone" shows all of them, "Following" only the people you follow.
+ * The Activity screen.
+ *   Everyone       the most recent public posts from other people, newest first
+ *   Following      only the people you follow
+ *   Notifications  who liked your spots and who started following you
  */
 public class ActivityFeedFragment extends Fragment {
 
@@ -32,6 +36,14 @@ public class ActivityFeedFragment extends Fragment {
     private boolean followingFailed;
     private String error;
     private FeedAdapter adapter;
+
+    private NotificationAdapter notificationAdapter;
+    private List<NotificationRepository.Item> notifications = new ArrayList<>();
+    private boolean notificationsLoaded;
+    private String notificationsError;
+    private boolean notificationsMarkedRead;
+
+    private RecyclerView feedList;
 
     public ActivityFeedFragment() {
     }
@@ -61,9 +73,30 @@ public class ActivityFeedFragment extends Fragment {
                 ((MainActivity) requireActivity()).focusOnSpot(spot);
             }
         });
-        RecyclerView list = view.findViewById(R.id.feed_list);
-        list.setLayoutManager(new LinearLayoutManager(requireContext()));
-        list.setAdapter(adapter);
+
+        notificationAdapter = new NotificationAdapter(new NotificationAdapter.Listener() {
+            @Override
+            public void onOpenSpot(NotificationRepository.Item item) {
+                SpotRepository.loadSpot(requireContext(), item.spotId, spot -> {
+                    if (getView() == null) return;
+                    if (spot == null) {
+                        Toast.makeText(requireContext(), "That place is no longer available.",
+                                Toast.LENGTH_SHORT).show();
+                    } else {
+                        PlaceDetailsFragment.open(requireActivity(), spot);
+                    }
+                });
+            }
+
+            @Override
+            public void onOpenPerson(NotificationRepository.Item item) {
+                UserProfileFragment.open(requireActivity(), item.actorUid, item.actorUsername);
+            }
+        });
+
+        feedList = view.findViewById(R.id.feed_list);
+        feedList.setLayoutManager(new LinearLayoutManager(requireContext()));
+        feedList.setAdapter(adapter);
 
         ((ChipGroup) view.findViewById(R.id.feed_chip_group))
                 .setOnCheckedStateChangeListener((group, ids) -> render());
@@ -87,6 +120,22 @@ public class ActivityFeedFragment extends Fragment {
             followingFailed = ids == null;
             render();
         });
+
+        NotificationRepository.load(items -> {
+            if (getView() == null) return;
+            notifications = items;
+            notificationsLoaded = true;
+            notificationsError = null;
+
+            int unread = 0;
+            for (NotificationRepository.Item item : items) if (!item.read) unread++;
+            showNotificationCount(unread);
+            render();
+        }, message -> {
+            if (getView() == null) return;
+            notificationsError = message + " Check your internet connection.";
+            render();
+        });
     }
 
     private boolean followingSelected() {
@@ -95,9 +144,29 @@ public class ActivityFeedFragment extends Fragment {
                 .getCheckedChipId() == R.id.feed_chip_following;
     }
 
+    private boolean notificationsSelected() {
+        View root = getView();
+        return root != null && ((ChipGroup) root.findViewById(R.id.feed_chip_group))
+                .getCheckedChipId() == R.id.feed_chip_notifications;
+    }
+
+    /** "Notifications (3)" on the chip while there is something new. */
+    private void showNotificationCount(int unread) {
+        View root = getView();
+        if (root == null) return;
+        ((Chip) root.findViewById(R.id.feed_chip_notifications))
+                .setText(unread > 0 ? "Notifications (" + unread + ")" : "Notifications");
+    }
+
     private void render() {
         View root = getView();
         if (root == null) return;
+        if (notificationsSelected()) {
+            renderNotifications(root);
+            return;
+        }
+        if (feedList.getAdapter() != adapter) feedList.setAdapter(adapter);
+
         TextView status = root.findViewById(R.id.feed_status);
         boolean following = followingSelected();
 
@@ -135,6 +204,40 @@ public class ActivityFeedFragment extends Fragment {
             status.setVisibility(View.VISIBLE);
         } else {
             status.setVisibility(View.GONE);
+        }
+    }
+
+    /** The "Notifications" chip: who liked your spots and who followed you. */
+    private void renderNotifications(View root) {
+        TextView status = root.findViewById(R.id.feed_status);
+        if (feedList.getAdapter() != notificationAdapter) feedList.setAdapter(notificationAdapter);
+
+        if (notificationsError != null) {
+            notificationAdapter.setItems(new ArrayList<>());
+            status.setText(notificationsError);
+            status.setVisibility(View.VISIBLE);
+            return;
+        }
+        if (!notificationsLoaded) {
+            notificationAdapter.setItems(new ArrayList<>());
+            status.setText("Loading...");
+            status.setVisibility(View.VISIBLE);
+            return;
+        }
+
+        notificationAdapter.setItems(notifications);
+        if (notifications.isEmpty()) {
+            status.setText("No activity yet. When someone likes one of your spots or follows you, it shows up here.");
+            status.setVisibility(View.VISIBLE);
+        } else {
+            status.setVisibility(View.GONE);
+        }
+
+        // The person is looking at them now: they count as seen (the dots stay until you leave)
+        if (!notificationsMarkedRead) {
+            notificationsMarkedRead = true;
+            NotificationRepository.markAllRead(notifications);
+            showNotificationCount(0);
         }
     }
 }

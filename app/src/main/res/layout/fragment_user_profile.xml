@@ -49,6 +49,7 @@
             android:paddingBottom="24dp">
 
             <ImageView
+                android:id="@+id/up_avatar"
                 android:layout_width="96dp"
                 android:layout_height="96dp"
                 android:layout_marginTop="8dp"
@@ -75,6 +76,18 @@
                 android:layout_marginTop="2dp"
                 android:textColor="@color/muted_dark"
                 android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/up_bio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:fontFamily="serif"
+                android:gravity="center"
+                android:textColor="@color/ink"
+                android:textSize="15sp"
+                android:textStyle="italic"
+                android:visibility="gone" />
 
             <TextView
                 android:id="@+id/up_follow_counts"

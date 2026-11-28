@@ -460,8 +460,7 @@ public class PlaceDetailsFragment extends Fragment {
         likeButton.setOnClickListener(v -> {
             boolean like = !v.isSelected();
             v.setEnabled(false);
-            SocialRepository.setLiked(spot, like, error -> {
-                if (getView() == null) return;
+            SocialRepository.setLiked(UserSession.getUsername(requireContext()), spot, like, error -> {                if (getView() == null) return;
                 v.setEnabled(true);
                 if (error != null) {
                     Toast.makeText(requireContext(), error, Toast.LENGTH_LONG).show();

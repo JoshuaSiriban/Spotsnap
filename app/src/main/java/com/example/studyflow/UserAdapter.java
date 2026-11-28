@@ -3,6 +3,7 @@ package com.example.studyflow;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -11,7 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
-/** A list of people (used by Search): avatar, name and @username. The whole row opens their profile. */
+/** A list of people (used by Search): picture, name and @username. The whole row opens their profile. */
 public class UserAdapter extends RecyclerView.Adapter<UserAdapter.VH> {
 
     public interface Listener {
@@ -43,6 +44,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.VH> {
         UserProfile user = users.get(position);
         h.name.setText(user.displayName());
         h.handle.setText("@" + user.username);
+        AvatarUtils.show(h.avatar, user.photo, 10);
         h.itemView.setOnClickListener(v -> listener.onOpen(user));
     }
 
@@ -52,11 +54,13 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.VH> {
     }
 
     static class VH extends RecyclerView.ViewHolder {
+        final ImageView avatar;
         final TextView name;
         final TextView handle;
 
         VH(@NonNull View v) {
             super(v);
+            avatar = v.findViewById(R.id.user_avatar);
             name = v.findViewById(R.id.user_name);
             handle = v.findViewById(R.id.user_handle);
         }

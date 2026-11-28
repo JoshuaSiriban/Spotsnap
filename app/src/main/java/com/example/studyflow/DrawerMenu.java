@@ -66,6 +66,7 @@ public class DrawerMenu {
         android.content.Context context = drawer.getContext();
         ((TextView) drawer.findViewById(R.id.drawer_name)).setText(UserSession.getDisplayName(context));
         ((TextView) drawer.findViewById(R.id.drawer_handle)).setText("@" + UserSession.getUsername(context));
+        AvatarUtils.show(drawer.findViewById(R.id.drawer_avatar), UserSession.getPhoto(context), 16);
     }
 
     /** Makes a brand new screen every time, so no old data or state is carried over. */

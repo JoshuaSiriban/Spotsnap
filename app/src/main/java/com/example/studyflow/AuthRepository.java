@@ -245,6 +245,9 @@ public final class AuthRepository {
                     if (username != null && !username.isEmpty()) {
                         String fullName = doc.getString("fullName");
                         UserSession.save(appContext, uid, username, fullName == null ? "" : fullName);
+                        com.google.firebase.firestore.Blob photo = doc.getBlob("photo");
+                        UserSession.saveExtras(appContext, doc.getString("bio"),
+                                photo == null ? null : photo.toBytes());
                     }
                     afterLoad.run();
                 })

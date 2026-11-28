@@ -49,12 +49,11 @@ public class ProfileFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         showNames(view);
+        loadMyExtras();
         view.findViewById(R.id.btn_back).setOnClickListener(v ->
                 requireActivity().getOnBackPressedDispatcher().onBackPressed());
         view.findViewById(R.id.btn_edit_profile).setOnClickListener(v ->
-                AccountDialogs.editName(requireActivity(), () -> {
-                    if (getView() != null) showNames(getView());
-                }));
+                DrawerMenu.open(requireActivity(), new EditProfileFragment()));
         view.findViewById(R.id.link_album).setOnClickListener(v ->
                 DrawerMenu.open(requireActivity(), new AlbumFragment()));
         view.findViewById(R.id.link_saved).setOnClickListener(v ->
@@ -110,6 +109,26 @@ public class ProfileFragment extends Fragment {
     private void showNames(View view) {
         ((TextView) view.findViewById(R.id.profile_name)).setText(UserSession.getDisplayName(requireContext()));
         ((TextView) view.findViewById(R.id.profile_handle)).setText("@" + UserSession.getUsername(requireContext()));
+        // the copy kept on the phone, so there is no waiting
+        showBioAndPhoto(view, UserSession.getBio(requireContext()), UserSession.getPhoto(requireContext()));
+    }
+
+    private void showBioAndPhoto(View root, String bio, byte[] photo) {
+        AvatarUtils.show(root.findViewById(R.id.profile_avatar), photo, 24);
+        TextView bioView = root.findViewById(R.id.profile_bio);
+        bioView.setText(bio);
+        bioView.setVisibility(bio == null || bio.isEmpty() ? View.GONE : View.VISIBLE);
+    }
+
+    /** Reads the newest bio and picture from Firestore (they may have changed on another phone). */
+    private void loadMyExtras() {
+        android.content.Context appContext = requireContext().getApplicationContext();
+        SocialRepository.loadUser(UserSession.getUid(), user -> {
+            if (user == null) return;
+            UserSession.saveExtras(appContext, user.bio, user.photo);
+            View root = getView();
+            if (root != null) showBioAndPhoto(root, user.bio, user.photo);
+        });
     }
 
     // Step 1: my own posts -> stats and recent posts. Then step 2 and 3 follow.

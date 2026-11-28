@@ -112,13 +112,19 @@ public class UserProfileFragment extends Fragment {
         ((TextView) root.findViewById(R.id.up_handle)).setText(username.isEmpty() ? "" : "@" + username);
     }
 
-    /** Fills in the full name (and the username, when we were only given the uid). */
+    /** Fills in the full name, the bio and the picture (and the username, when we only had the uid). */
     private void loadProfile() {
         SocialRepository.loadUser(uid, user -> {
-            if (getView() == null || user == null) return;
+            View root = getView();
+            if (root == null || user == null) return;
             username = user.username;
             fullName = user.fullName;
             showNames();
+
+            AvatarUtils.show(root.findViewById(R.id.up_avatar), user.photo, 24);
+            TextView bio = root.findViewById(R.id.up_bio);
+            bio.setText(user.bio);
+            bio.setVisibility(user.bio.isEmpty() ? View.GONE : View.VISIBLE);
         });
     }
 

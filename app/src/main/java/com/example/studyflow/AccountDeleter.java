@@ -93,6 +93,9 @@ public final class AccountDeleter {
                 .onSuccessTask(unused -> removeLikesIGave(uid))
                 .onSuccessTask(unused -> removeSavesIGave(uid))
                 .onSuccessTask(unused -> removeFollowLinks(uid))
+                .onSuccessTask(unused -> bestEffort(
+                        deleteQuery(db().collection("users").document(uid).collection("notifications")),
+                        "the activity list"))
                 .onSuccessTask(unused -> deleteProfile(uid));
     }
 

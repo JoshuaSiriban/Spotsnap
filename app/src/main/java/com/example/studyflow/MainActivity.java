@@ -336,8 +336,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         findViewById(R.id.fragment_container).setVisibility(onMap ? View.GONE : View.VISIBLE);
         findViewById(R.id.map_overlay).setVisibility(onMap ? View.VISIBLE : View.GONE);
         updateBackCallback();
+        if (onMap) refreshActivityBadge();
         // You may have followed or unfollowed someone on another screen
         if (onMap && followingOnly && googleMap != null) loadFollowingForFilter();
+    }
+
+    /** Shows how many new likes / followers there are, as a small badge on the "Activity" menu row. */
+    private void refreshActivityBadge() {
+        NotificationRepository.countUnread(count -> {
+            if (isDestroyed()) return;
+            TextView badge = findViewById(R.id.drawer_activity_badge);
+            if (badge == null) return;
+            badge.setText(count > 99 ? "99+" : String.valueOf(count));
+            badge.setVisibility(count > 0 ? View.VISIBLE : View.GONE);
+        });
     }
 
     @Override

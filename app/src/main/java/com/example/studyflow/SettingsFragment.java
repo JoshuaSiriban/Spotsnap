@@ -40,9 +40,7 @@ public class SettingsFragment extends Fragment {
         TextView nameValue = view.findViewById(R.id.row_name_value);
         nameValue.setText(UserSession.getDisplayName(requireContext()));
         view.findViewById(R.id.row_edit_profile).setOnClickListener(v ->
-                AccountDialogs.editName(requireActivity(), () -> {
-                    if (getView() != null) nameValue.setText(UserSession.getDisplayName(requireContext()));
-                }));
+                DrawerMenu.open(requireActivity(), new EditProfileFragment()));
         view.findViewById(R.id.row_password).setOnClickListener(v ->
                 AccountDialogs.changePassword(requireActivity()));
         ((TextView) view.findViewById(R.id.row_email_value)).setText(UserSession.getEmail());

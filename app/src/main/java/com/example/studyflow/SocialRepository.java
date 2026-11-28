@@ -56,7 +56,7 @@ public final class SocialRepository {
     }
 
     /** Likes or unlikes a spot. Calls back with an error message, or null when it worked. */
-    public static void setLiked(Spot spot, boolean like, Consumer<String> callback) {
+    public static void setLiked(String myUsername, Spot spot, boolean like, Consumer<String> callback) {
         if (!UserSession.isLoggedIn() || spot == null || spot.getId() == null) {
             callback.accept("You need to be logged in to like places.");
             return;
@@ -77,7 +77,12 @@ public final class SocialRepository {
                         transaction.update(spotRef, "likes", FieldValue.increment(-1));
                     }
                     return null;
-                }).addOnSuccessListener(unused -> callback.accept(null))
+                }).addOnSuccessListener(unused -> {
+                    // The activity list of the spot's owner (best effort: it never breaks the like)
+                    if (like) NotificationRepository.sendLike(spot, myUsername);
+                    else NotificationRepository.removeLike(spot);
+                    callback.accept(null);
+                })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Could not change the like", e);
                     callback.accept("Could not update your like. Check your internet connection.");
@@ -133,7 +138,12 @@ public final class SocialRepository {
             batch.delete(followerRef);
         }
         batch.commit()
-                .addOnSuccessListener(unused -> callback.accept(null))
+                .addOnSuccessListener(unused -> {
+                    // The activity list of the other person (best effort)
+                    if (follow) NotificationRepository.sendFollow(myUsername, targetUid);
+                    else NotificationRepository.removeFollow(targetUid);
+                    callback.accept(null);
+                })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Could not change the follow", e);
                     callback.accept("Could not update. Check your internet connection.");
@@ -185,8 +195,9 @@ public final class SocialRepository {
                         callback.accept(null);
                         return;
                     }
-                    callback.accept(new UserProfile(uid, username, doc.getString("fullName")));
-                })
+                    com.google.firebase.firestore.Blob photo = doc.getBlob("photo");
+                    callback.accept(new UserProfile(uid, username, doc.getString("fullName"),
+                            doc.getString("bio"), photo == null ? null : photo.toBytes()));                })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Could not load the user", e);
                     callback.accept(null);
@@ -219,8 +230,9 @@ public final class SocialRepository {
                     for (com.google.firebase.firestore.DocumentSnapshot doc : snapshot.getDocuments()) {
                         String username = doc.getString("username");
                         if (username == null || username.isEmpty() || doc.getId().equals(me)) continue;
-                        found.add(new UserProfile(doc.getId(), username, doc.getString("fullName")));
-                        if (found.size() >= MAX_USER_RESULTS) break;
+                        com.google.firebase.firestore.Blob photo = doc.getBlob("photo");
+                        found.add(new UserProfile(doc.getId(), username, doc.getString("fullName"),
+                                doc.getString("bio"), photo == null ? null : photo.toBytes()));                        if (found.size() >= MAX_USER_RESULTS) break;
                     }
                     onResult.accept(found);
                 })
