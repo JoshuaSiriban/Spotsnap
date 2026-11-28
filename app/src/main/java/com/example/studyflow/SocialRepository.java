@@ -8,8 +8,11 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.WriteBatch;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -163,6 +166,68 @@ public final class SocialRepository {
     /** Number of people a user follows, or -1 when it could not be counted. */
     public static void countFollowing(String uid, Consumer<Long> callback) {
         count("following", uid, callback);
+    }
+
+    // ----------------------------------------------------------------- people
+
+    private static final int MAX_USER_RESULTS = 20;
+
+    /** One person's public profile, or null when it does not exist or could not be read. */
+    public static void loadUser(String uid, Consumer<UserProfile> callback) {
+        if (uid == null || uid.isEmpty()) {
+            callback.accept(null);
+            return;
+        }
+        db().collection("users").document(uid).get()
+                .addOnSuccessListener(doc -> {
+                    String username = doc.getString("username");
+                    if (username == null || username.isEmpty()) {
+                        callback.accept(null);
+                        return;
+                    }
+                    callback.accept(new UserProfile(uid, username, doc.getString("fullName")));
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Could not load the user", e);
+                    callback.accept(null);
+                });
+    }
+
+    /**
+     * People whose username starts with {@code query} (not case sensitive, a leading "@" is
+     * ignored). You are left out of the results. Calls back with an error message on failure.
+     */
+    public static void searchUsers(String query, Consumer<List<UserProfile>> onResult,
+                                   Consumer<String> onError) {
+        String q = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
+        if (q.startsWith("@")) q = q.substring(1);
+        if (q.isEmpty()) {
+            onResult.accept(new ArrayList<>());
+            return;
+        }
+        String me = UserSession.getUid();
+
+        // usernameLower is saved when the account is created: "starts with" = a range query
+        db().collection("users")
+                .orderBy("usernameLower")
+                .startAt(q)
+                .endAt(q + "\uf8ff")
+                .limit(MAX_USER_RESULTS + 1)   // one extra, in case you are one of the matches
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<UserProfile> found = new ArrayList<>();
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : snapshot.getDocuments()) {
+                        String username = doc.getString("username");
+                        if (username == null || username.isEmpty() || doc.getId().equals(me)) continue;
+                        found.add(new UserProfile(doc.getId(), username, doc.getString("fullName")));
+                        if (found.size() >= MAX_USER_RESULTS) break;
+                    }
+                    onResult.accept(found);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Could not search users", e);
+                    onError.accept("Could not search for people.");
+                });
     }
 
     private static void count(String list, String uid, Consumer<Long> callback) {

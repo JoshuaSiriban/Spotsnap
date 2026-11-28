@@ -2,6 +2,8 @@ package com.example.studyflow;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -14,6 +16,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.ConcatAdapter;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -28,15 +31,25 @@ import java.util.Locale;
 
 /**
  * Search: type to find places by name, review, category or username, and/or tap a category chip.
- * It searches every public place plus the user's own private ones.
+ * It searches every public place plus the user's own private ones. People whose username starts
+ * with what you typed are listed above the places; tapping one opens their profile.
  */
 public class SearchFragment extends Fragment {
 
     private static final int MAX_RESULTS = 50;
+    private static final long USER_SEARCH_DELAY_MS = 300;   // wait for the person to stop typing
 
     private final ArrayList<Spot> allSpots = new ArrayList<>();
     private boolean loaded;
     private SpotListAdapter adapter;
+    private UserAdapter userAdapter;
+
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private Runnable pendingUserSearch;
+    private int userRequestId;                       // answers for older searches are ignored
+    private List<UserProfile> users = new ArrayList<>();
+    private int placeCount;
+    private boolean browsing;                        // nothing typed, no chip: showing the newest places
 
     public SearchFragment() {
     }
@@ -72,9 +85,13 @@ public class SearchFragment extends Fragment {
                 ((MainActivity) requireActivity()).focusOnSpot(spot);
             }
         });
+        userAdapter = new UserAdapter(user -> {
+            hideKeyboard();
+            UserProfileFragment.open(requireActivity(), user.uid, user.username);
+        });
         RecyclerView list = view.findViewById(R.id.search_results);
         list.setLayoutManager(new LinearLayoutManager(requireContext()));
-        list.setAdapter(adapter);
+        list.setAdapter(new ConcatAdapter(userAdapter, adapter));   // people first, then places
 
         input.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
@@ -122,13 +139,19 @@ public class SearchFragment extends Fragment {
                 ? new String[0] : simplify(query).trim().split("\\s+");
         String category = selectedCategory(root);
 
+        // People are searched by username, so only when something is typed and no category chip is on
+        searchPeople(query, category);
+
         if (words.length == 0 && category == null) {
             // nothing typed and no chip: show the newest places as a starting point
             List<Spot> newest = new ArrayList<>(allSpots.subList(0, Math.min(10, allSpots.size())));
             adapter.setSpots(newest);
-            setStatus(allSpots.isEmpty() ? "NO PLACES YET" : "NEWEST PLACES");
+            browsing = true;
+            placeCount = newest.size();
+            updateStatus();
             return;
         }
+        browsing = false;
 
         List<Spot> matches = new ArrayList<>();
         final java.util.Map<Spot, Integer> scores = new java.util.IdentityHashMap<>();
@@ -149,8 +172,58 @@ public class SearchFragment extends Fragment {
         if (matches.size() > MAX_RESULTS) matches = new ArrayList<>(matches.subList(0, MAX_RESULTS));
 
         adapter.setSpots(matches);
-        setStatus(matches.isEmpty() ? "NO PLACES FOUND"
-                : matches.size() + (matches.size() == 1 ? " PLACE FOUND" : " PLACES FOUND"));
+        placeCount = matches.size();
+        updateStatus();
+    }
+
+    // ------------------------------------------------------------------ people
+
+    /** Looks people up by username (a short moment after the last key press). */
+    private void searchPeople(String query, @Nullable String category) {
+        if (pendingUserSearch != null) handler.removeCallbacks(pendingUserSearch);
+        userRequestId++;                                   // any answer still on its way is out of date
+
+        String typed = query.trim();
+        if (typed.startsWith("@")) typed = typed.substring(1);
+        final String usernameQuery = typed.trim();
+
+        if (usernameQuery.isEmpty() || category != null) {
+            showPeople(new ArrayList<>());
+            return;
+        }
+
+        final int requestId = userRequestId;
+        pendingUserSearch = () -> SocialRepository.searchUsers(usernameQuery, found -> {
+            if (getView() == null || requestId != userRequestId) return;
+            showPeople(found);
+        }, message -> {
+            if (getView() == null || requestId != userRequestId) return;
+            showPeople(new ArrayList<>());                 // places still work without people
+        });
+        handler.postDelayed(pendingUserSearch, USER_SEARCH_DELAY_MS);
+    }
+
+    private void showPeople(List<UserProfile> found) {
+        users = found;
+        userAdapter.setUsers(found);
+        updateStatus();
+    }
+
+    /** "2 PEOPLE · 3 PLACES FOUND", "NEWEST PLACES", "NOTHING FOUND"... */
+    private void updateStatus() {
+        if (!loaded) return;
+        if (browsing) {
+            setStatus(allSpots.isEmpty() ? "NO PLACES YET" : "NEWEST PLACES");
+            return;
+        }
+        if (users.isEmpty() && placeCount == 0) {
+            setStatus("NOTHING FOUND");
+            return;
+        }
+        List<String> parts = new ArrayList<>();
+        if (!users.isEmpty()) parts.add(users.size() + (users.size() == 1 ? " PERSON" : " PEOPLE"));
+        if (placeCount > 0) parts.add(placeCount + (placeCount == 1 ? " PLACE" : " PLACES"));
+        setStatus(android.text.TextUtils.join("  ·  ", parts) + " FOUND");
     }
 
     /** -1 when some word is not found anywhere; otherwise higher = better match. */
@@ -204,6 +277,8 @@ public class SearchFragment extends Fragment {
     @Override
     public void onDestroyView() {
         hideKeyboard();
+        if (pendingUserSearch != null) handler.removeCallbacks(pendingUserSearch);
+        userRequestId++;
         super.onDestroyView();
     }
 }

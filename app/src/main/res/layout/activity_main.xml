@@ -230,6 +230,17 @@
                     app:singleLine="true">
 
                     <com.google.android.material.chip.Chip
+                        android:id="@+id/filter_following"
+                        style="@style/Widget.MaterialComponents.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Following"
+                        android:textColor="@color/ink"
+                        app:chipBackgroundColor="@color/chip_bg"
+                        app:chipStrokeColor="@color/line"
+                        app:chipStrokeWidth="1dp" />
+
+                    <com.google.android.material.chip.Chip
                         android:id="@+id/filter_restaurants"
                         style="@style/Widget.MaterialComponents.Chip.Filter"
                         android:layout_width="wrap_content"

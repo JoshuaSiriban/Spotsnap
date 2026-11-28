@@ -77,7 +77,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private final Set<String> selectedCategories = new HashSet<>();         // lower case; empty = all
     private boolean loadErrorShown;
     private Set<String> focusIds;       // when not null, the map only shows these spots (by id)
-
+    private boolean followingOnly;      // the "Following" chip is on: only spots of people you follow
+    private Set<String> followingIds;   // uids of the people you follow (null until loaded)
     private FusedLocationProviderClient locationClient;
     private Location lastLocation;     // where the user was when they last tapped "my location"
     private boolean nearbyVisible;
@@ -176,18 +177,49 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-    /** No chip selected = every spot. Selected chips = only spots of those categories. */
+    /**
+     * No chip selected = every spot. Selected category chips = only spots of those categories.
+     * The "Following" chip = only spots of the people you follow (it combines with the categories).
+     */
     private void setupFilterChips() {
         ChipGroup group = findViewById(R.id.filter_group);
         group.setOnCheckedStateChangeListener((chipGroup, checkedIds) -> {
+            boolean wasFollowingOnly = followingOnly;
+            followingOnly = false;
             selectedCategories.clear();
             for (int id : checkedIds) {
+                if (id == R.id.filter_following) {
+                    followingOnly = true;
+                    continue;
+                }
                 Chip chip = chipGroup.findViewById(id);
                 if (chip != null) {
                     selectedCategories.add(chip.getText().toString().toLowerCase(Locale.ROOT));
                 }
             }
+            if (followingOnly && !wasFollowingOnly) loadFollowingForFilter();
+            else applyFilter();
+        });
+    }
+
+    /** Reads who the user follows, then updates the markers. Called when the chip is switched on. */
+    private void loadFollowingForFilter() {
+        applyFilter(); // right away, with the list we already have (nothing yet = hidden)
+        SocialRepository.loadFollowingIds(ids -> {
+            if (isDestroyed() || !followingOnly) return;   // closed, or the chip was switched off
+            if (ids == null) {
+                if (followingIds == null) {                // nothing to fall back on
+                    toast("Could not load who you follow. Check your internet connection.");
+                    ((Chip) findViewById(R.id.filter_following)).setChecked(false);
+                }
+                return;                                    // otherwise keep the list we already have
+            }
+            boolean firstTime = followingIds == null || !followingIds.equals(ids);
+            followingIds = ids;
             applyFilter();
+            if (ids.isEmpty() && firstTime) {
+                toast("You are not following anyone yet. Search for people or open a place and tap Follow.");
+            }
         });
     }
 
@@ -269,6 +301,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         findViewById(R.id.fragment_container).setVisibility(onMap ? View.GONE : View.VISIBLE);
         findViewById(R.id.map_overlay).setVisibility(onMap ? View.VISIBLE : View.GONE);
         updateBackCallback();
+        // You may have followed or unfollowed someone on another screen
+        if (onMap && followingOnly && googleMap != null) loadFollowingForFilter();
     }
 
     @Override
@@ -353,6 +387,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private boolean matchesFilter(Spot spot) {
         if (focusIds != null && !focusIds.contains(spot.getId())) return false;
+        if (followingOnly && (followingIds == null || !followingIds.contains(spot.getCreatorId()))) {
+            return false;
+        }
         return selectedCategories.isEmpty()
                 || selectedCategories.contains(spot.getCategory().toLowerCase(Locale.ROOT));
     }

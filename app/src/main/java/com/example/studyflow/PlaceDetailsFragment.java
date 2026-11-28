@@ -169,6 +169,7 @@ public class PlaceDetailsFragment extends Fragment {
         setupLikeButton(view);
         setupSaveButton(view);
         setupFollowButton(view);
+        setupCreatorLink(view);
 
         view.findViewById(R.id.btn_go).setOnClickListener(v -> openDirections());
     }
@@ -419,6 +420,24 @@ public class PlaceDetailsFragment extends Fragment {
                 ((TextView) getView().findViewById(R.id.likesCount)).setText(String.valueOf(spot.getLikes()));
             });
         });
+    }
+
+    /** Tapping the creator's name opens their profile (your own name opens your profile). */
+    private void setupCreatorLink(View root) {
+        String creatorId = spot == null ? null : spot.getCreatorId();
+        if (creatorId == null || creatorId.isEmpty()) return; // old sample spot: nobody to open
+
+        int padding = (int) (8 * getResources().getDisplayMetrics().density);
+        View.OnClickListener openProfile = v ->
+                UserProfileFragment.open(requireActivity(), creatorId, spot.getCreator());
+
+        for (int id : new int[]{R.id.spotCreator, R.id.noteCreator}) {
+            TextView name = root.findViewById(id);
+            name.setOnClickListener(openProfile);
+            name.setTextColor(ContextCompat.getColor(requireContext(), R.color.coral));
+            name.setPaintFlags(name.getPaintFlags() | android.graphics.Paint.UNDERLINE_TEXT_FLAG);
+            name.setPadding(0, padding, 0, padding);   // a bigger area to tap
+        }
     }
 
     /** Follow / Following button for the person who pinned the spot (hidden for your own posts). */
