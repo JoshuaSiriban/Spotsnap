@@ -16,6 +16,7 @@ import android.widget.Toast;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RatingBar;
+import android.widget.RadioGroup;
 
 import java.text.DateFormat;
 import java.util.Date;
@@ -179,6 +180,7 @@ public class PlaceDetailsFragment extends Fragment {
         setupFollowButton(view);
         setupCreatorLink(view);
         setupRatingAndReviews(view);
+        setupShareAndReport(view);
 
         view.findViewById(R.id.btn_go).setOnClickListener(v -> openDirections());
     }
@@ -713,5 +715,83 @@ public class PlaceDetailsFragment extends Fragment {
     private void toast(String message) {
         android.content.Context context = getContext();
         if (context != null) Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+    }
+
+    // ---------------------------------------------------------------------
+    // Share and report
+    // ---------------------------------------------------------------------
+
+    private void setupShareAndReport(View root) {
+        root.findViewById(R.id.btn_share).setOnClickListener(v -> shareSpot());
+
+        // You cannot report your own post, and old sample spots are not in the database
+        View report = root.findViewById(R.id.btn_report);
+        boolean reportable = spot != null && spot.getId() != null && !SpotRepository.isOwner(spot);
+        report.setVisibility(reportable ? View.VISIBLE : View.GONE);
+        if (reportable) report.setOnClickListener(v -> showReportDialog());
+    }
+
+    /** Opens the Android share sheet with the name of the spot and a Google Maps link. */
+    private void shareSpot() {
+        if (spot == null) return;
+
+        StringBuilder text = new StringBuilder("Check out " + spot.getName() + " on SpotSnap");
+        if (hasValidLocation()) {
+            // Locale.US so the numbers always use a dot, never a comma
+            String latLng = String.format(java.util.Locale.US, "%.6f,%.6f",
+                    spot.getLatitude(), spot.getLongitude());
+            text.append("\n").append("https://www.google.com/maps/search/?api=1&query=").append(latLng);
+        }
+
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.setType("text/plain");
+        send.putExtra(Intent.EXTRA_SUBJECT, spot.getName());
+        send.putExtra(Intent.EXTRA_TEXT, text.toString());
+        try {
+            startActivity(Intent.createChooser(send, "Share this place"));
+        } catch (ActivityNotFoundException e) {
+            toast("No app was found to share with.");
+        }
+    }
+
+    /** Dialog to choose why the post is reported, then saves the report for the owner to review. */
+    private void showReportDialog() {
+        if (spot == null || spot.getId() == null) return;
+
+        View form = getLayoutInflater().inflate(R.layout.dialog_report, null);
+        RadioGroup reasons = form.findViewById(R.id.report_reasons);
+        EditText details = form.findViewById(R.id.report_details);
+
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Report this place")
+                .setView(form)
+                .setPositiveButton("Send report", null)   // set below so the dialog stays open on a mistake
+                .setNegativeButton("Cancel", null)
+                .create();
+        dialog.show();
+
+        dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            int checked = reasons.getCheckedRadioButtonId();
+            if (checked == View.NO_ID) {
+                toast("Choose a reason first.");
+                return;
+            }
+            String reason = checked == R.id.report_inappropriate ? ReportRepository.REASON_INAPPROPRIATE
+                    : checked == R.id.report_wrong_place ? ReportRepository.REASON_WRONG_PLACE
+                      : checked == R.id.report_spam ? ReportRepository.REASON_SPAM
+                        : ReportRepository.REASON_OTHER;
+
+            v.setEnabled(false);
+            ReportRepository.submitReport(spot, UserSession.getUsername(requireContext()), reason,
+                    details.getText().toString().trim(), error -> {
+                        if (error == null) {
+                            dialog.dismiss();
+                            toast("Thanks! Your report was sent and will be reviewed.");
+                        } else {
+                            v.setEnabled(true);
+                            toast(error);
+                        }
+                    });
+        });
     }
 }

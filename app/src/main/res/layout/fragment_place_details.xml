@@ -355,6 +355,41 @@
 
             </LinearLayout>
 
+            <!-- NEW: Share + Report -->
+            <LinearLayout
+                android:id="@+id/share_report_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_share"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:text="Share"
+                    android:textColor="@color/ink"
+                    app:cornerRadius="14dp"
+                    app:strokeColor="@color/ink" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_report"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:text="Report"
+                    android:textColor="@color/coral"
+                    app:cornerRadius="14dp"
+                    app:strokeColor="@color/coral" />
+
+            </LinearLayout>
+
             <!-- Owner actions -->
             <LinearLayout
                 android:id="@+id/owner_actions"
@@ -382,8 +417,8 @@
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="52dp"
-                    android:layout_weight="1"
                     android:layout_marginStart="10dp"
+                    android:layout_weight="1"
                     android:text="Delete"
                     android:textColor="@color/coral"
                     app:strokeColor="@color/coral"
